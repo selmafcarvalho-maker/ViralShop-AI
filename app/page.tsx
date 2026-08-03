@@ -26,40 +26,228 @@ export default function Home() {
   }
 
   function generatePrompt() {
-    const generated = `
-VIRALSHOP AI — PROMPT V1
+    let promptText = "";
 
-Estilo: ${style}
-Duração: ${duration}
+    if (style === "UGC Real") {
+      promptText = `
+VIRALSHOP AI — UGC REAL
 
-Criar um vídeo vertical 9:16, ultra-realista, com aparência de gravação real para TikTok Shop.
+CRIAR VÍDEO VERTICAL 9:16.
+DURAÇÃO EXATA: ${duration}.
 
-Usar a imagem enviada como referência principal do produto.
-Manter o produto fiel à referência, sem alterar cor, formato, textura, proporções ou detalhes.
+REGRA MAIS IMPORTANTE:
+A FOTO ENVIADA É A REFERÊNCIA ABSOLUTA DO PRODUTO.
 
-O vídeo deve parecer espontâneo e natural, sem aparência de publicidade tradicional.
+O produto precisa permanecer visualmente IDÊNTICO à imagem de referência durante todo o vídeo.
 
-${style === "UGC Real"
-        ? "Uma criadora brasileira apresenta o produto de maneira natural, falando diretamente com a câmera."
-        : style === "POV Real"
-        ? "Criar uma experiência POV realista, como se o espectador estivesse vendo o produto através dos próprios olhos."
-        : "Criar um showcase realista, mantendo o produto como protagonista e evitando manipulações desnecessárias."
-      }
+NÃO modificar o produto.
+NÃO redesenhar o produto.
+NÃO trocar o produto.
+NÃO alterar formato.
+NÃO alterar cor.
+NÃO alterar textura.
+NÃO alterar tamanho ou proporção.
+NÃO adicionar detalhes.
+NÃO remover detalhes.
+NÃO criar acessórios diferentes.
+NÃO duplicar o produto.
 
-A fala deve ser brasileira, natural, dinâmica e contínua.
-A voz deve parecer uma pessoa real conversando, sem ritmo robótico ou pausas artificiais.
+Se a imagem mostrar um relógio, usar EXATAMENTE aquele relógio.
+Se a imagem mostrar joias junto ao relógio, manter EXATAMENTE aquelas joias.
+Não inventar outro relógio.
+Não inventar outras joias.
 
-Incluir um CTA natural direcionando a pessoa para o carrinho do TikTok Shop.
+CONTINUIDADE:
+O mesmo produto permanece na cena do início ao fim.
+O produto não pode se transformar entre frames.
+O produto não pode mudar de posição de maneira impossível.
+Não gerar objetos duplicados.
 
-Não utilizar texto na tela.
-Não utilizar segunda voz.
-Não utilizar narrador externo.
+MODELO:
+Aparece UMA ÚNICA mulher brasileira.
+Ela é a única pessoa da cena.
+Ela fala diretamente com a câmera como uma criadora real de TikTok.
+
+CORPO E MÃOS:
+Anatomia humana realista.
+Duas mãos normais.
+Cinco dedos em cada mão.
+Sem dedos extras.
+Sem mãos duplicadas.
+Sem braços duplicados.
+Sem mãos torcidas.
+Sem deformações.
+
+MOVIMENTO:
+Movimentos simples e naturais.
+A modelo segura o produto de maneira fisicamente correta.
+Nada de movimentos rápidos ou impossíveis.
+Câmera parecida com celular gravando um vídeo real.
+Pequenas movimentações naturais da câmera.
+
+VOZ:
+UMA ÚNICA VOZ FEMININA.
+A mesma voz durante todo o vídeo.
+Nenhuma segunda voz.
+Nenhum narrador.
+Nenhuma voz masculina.
+Nenhum eco.
+Nenhuma troca de voz.
+
+FALA:
+Português brasileiro.
+Tom de conversa.
+Natural.
+Espontâneo.
+Confiante.
+Dinâmico.
+
+Para 8 segundos, usar UMA frase curta de aproximadamente 16 a 20 palavras.
+
+A fala NÃO pode ser arrastada.
+A fala NÃO pode ser lenta.
+A fala NÃO pode ter pausas artificiais.
+Não separar cada palavra.
+Não falar como locutora de propaganda.
+
+A modelo deve falar como se estivesse mostrando um achado para uma amiga.
+
+ESTRUTURA DA FALA:
+Gancho rápido + benefício real visível + CTA curto.
+
+IMPORTANTE:
+Não inventar benefícios que não possam ser confirmados pela imagem ou descrição do produto.
+
+EXEMPLO DE RITMO:
+"Gente, olha esse relógio! O conjunto é lindo e combina com tudo. Eu já colocaria no carrinho!"
+
+Usar o exemplo somente como referência de ritmo.
+Adaptar a fala ao produto real.
+
+SINCRONIZAÇÃO:
+A boca deve acompanhar exatamente a fala.
+A voz começa junto com a ação.
+A fala termina antes do final do vídeo.
+Não deixar silêncio longo.
+
+CENA:
+Começar mostrando a modelo e o produto imediatamente.
+Produto claramente visível nos primeiros segundos.
+A modelo apresenta o produto de forma espontânea.
+Finalizar com um gesto natural indicando o carrinho.
+
+SEM:
+Texto na tela.
+Legendas.
+Segunda pessoa.
+Segunda voz.
+Narrador.
+Produto diferente.
+Produto duplicado.
+Mãos deformadas.
+Dedos extras.
+Mudança de cor.
+Mudança de formato.
+Mudança de textura.
+Movimentos impossíveis.
+
+PRIORIDADE:
+1. Fidelidade absoluta ao produto.
+2. Anatomia correta.
+3. Uma única modelo.
+4. Uma única voz.
+5. Fala rápida e natural.
+6. Aparência de vídeo UGC real.
+`.trim();
+    } else if (style === "POV Real") {
+      promptText = `
+VIRALSHOP AI — POV REAL
+
+Vídeo vertical 9:16.
+Duração: ${duration}.
+
+A imagem enviada é a referência absoluta do produto.
+
+Manter o produto exatamente igual à referência:
+mesma cor, formato, textura, tamanho, proporções e detalhes.
+
 Não alterar o produto.
+Não duplicar o produto.
+Não inventar acessórios.
+Não deformar o produto.
 
-Priorizar realismo, fidelidade do produto e movimento natural.
-    `.trim();
+Criar uma gravação POV extremamente realista, como se uma pessoa estivesse segurando e mostrando o produto usando um celular.
 
-    setPrompt(generated);
+Movimentos naturais de mão.
+Anatomia correta.
+Sem dedos extras.
+Sem mãos duplicadas.
+Sem torções.
+
+UMA ÚNICA VOZ humana brasileira, caso exista fala.
+Sem narrador.
+Sem segunda voz.
+
+Fala curta, natural e dinâmica.
+Nada de fala lenta ou arrastada.
+
+Começar mostrando o produto imediatamente.
+
+Sem texto na tela.
+Sem legendas.
+Sem efeitos exagerados.
+
+Prioridade máxima:
+produto idêntico à referência + movimento realista + aparência de vídeo gravado por uma pessoa.
+`.trim();
+    } else {
+      promptText = `
+VIRALSHOP AI — SHOWCASE REAL
+
+Vídeo vertical 9:16.
+Duração: ${duration}.
+
+Usar a imagem enviada como referência absoluta.
+
+O produto deve permanecer IDÊNTICO durante todo o vídeo.
+
+Não modificar:
+cor,
+formato,
+textura,
+tamanho,
+proporções,
+materiais,
+detalhes ou acessórios.
+
+Não duplicar o produto.
+Não deformar o produto.
+Não criar versões diferentes do produto.
+
+Mostrar o produto com movimentos de câmera suaves e fisicamente realistas.
+
+Foco nos detalhes reais do produto.
+
+Sem transformações.
+Sem efeitos que alterem o produto.
+Sem texto na tela.
+Sem objetos inventados.
+
+Se houver fala:
+UMA ÚNICA VOZ brasileira.
+Natural.
+Curta.
+Dinâmica.
+Sem narrador.
+Sem segunda voz.
+Sem fala lenta.
+
+Prioridade máxima:
+fidelidade visual absoluta + movimento natural + aparência de gravação real.
+`.trim();
+    }
+
+    setPrompt(promptText);
   }
 
   return (
@@ -70,15 +258,15 @@ Priorizar realismo, fidelidade do produto e movimento natural.
           <p>Seu criador de vídeos para TikTok Shop</p>
         </div>
 
-        <div className="version">V1.0</div>
+        <div className="version">V1.2</div>
       </header>
 
       <section className="hero">
         <h1>Crie seu próximo vídeo viral.</h1>
 
         <p>
-          Envie o produto, escolha o estilo e deixe o ViralShop AI preparar
-          seu prompt.
+          Envie o produto, escolha o estilo e gere um prompt focado em
+          realismo, fidelidade e conversão.
         </p>
       </section>
 
@@ -140,7 +328,9 @@ Priorizar realismo, fidelidade do produto e movimento natural.
                 <button
                   key={item}
                   className={
-                    duration === item ? "duration-btn active" : "duration-btn"
+                    duration === item
+                      ? "duration-btn active"
+                      : "duration-btn"
                   }
                   onClick={() => setDuration(item)}
                 >
@@ -179,3 +369,4 @@ Priorizar realismo, fidelidade do produto e movimento natural.
     </main>
   );
 }
+
