@@ -3,13 +3,18 @@
 import { ChangeEvent, useState } from "react";
 
 type VideoStyle = "UGC Real" | "POV Real" | "Showcase";
-type Duration = "8 segundos" | "16 segundos" | "24 segundos";
+type Duration = "4 segundos" | "8 segundos" | "12 segundos";
 
 export default function Home() {
   const [image, setImage] = useState<string | null>(null);
   const [style, setStyle] = useState<VideoStyle>("UGC Real");
   const [duration, setDuration] = useState<Duration>("8 segundos");
   const [prompt, setPrompt] = useState("");
+  const [status, setStatus] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   function handleImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -20,234 +25,276 @@ export default function Home() {
 
     reader.onload = () => {
       setImage(reader.result as string);
+      setVideoUrl(null);
+      setError("");
     };
 
     reader.readAsDataURL(file);
   }
 
-  function generatePrompt() {
-    let promptText = "";
+  function createPrompt() {
+    const seconds = duration.replace(" segundos", "");
 
-    if (style === "UGC Real") {
-      promptText = `
-VIRALSHOP AI — UGC REAL
+    return `
+VIRALSHOP AI — ${style.toUpperCase()}
 
-CRIAR VÍDEO VERTICAL 9:16.
-DURAÇÃO EXATA: ${duration}.
+Criar vídeo vertical 9:16.
 
-REGRA MAIS IMPORTANTE:
+DURAÇÃO EXATA: ${seconds} segundos.
+
 A FOTO ENVIADA É A REFERÊNCIA ABSOLUTA DO PRODUTO.
 
-O produto precisa permanecer visualmente IDÊNTICO à imagem de referência durante todo o vídeo.
+O produto deve permanecer visualmente IDÊNTICO à imagem durante todo o vídeo.
 
-NÃO modificar o produto.
-NÃO redesenhar o produto.
-NÃO trocar o produto.
-NÃO alterar formato.
-NÃO alterar cor.
-NÃO alterar textura.
-NÃO alterar tamanho ou proporção.
-NÃO adicionar detalhes.
-NÃO remover detalhes.
-NÃO criar acessórios diferentes.
-NÃO duplicar o produto.
+Não alterar:
+- cor
+- formato
+- textura
+- tamanho
+- proporções
+- materiais
+- detalhes
+- embalagem
+- acessórios
 
-Se a imagem mostrar um relógio, usar EXATAMENTE aquele relógio.
-Se a imagem mostrar joias junto ao relógio, manter EXATAMENTE aquelas joias.
-Não inventar outro relógio.
-Não inventar outras joias.
+Não trocar o produto.
+Não redesenhar o produto.
+Não inventar outro produto.
+Não duplicar o produto.
+Não deformar o produto.
 
-CONTINUIDADE:
-O mesmo produto permanece na cena do início ao fim.
-O produto não pode se transformar entre frames.
-O produto não pode mudar de posição de maneira impossível.
-Não gerar objetos duplicados.
+A mesma referência deve ser respeitada do primeiro ao último frame.
 
-MODELO:
-Aparece UMA ÚNICA mulher brasileira.
-Ela é a única pessoa da cena.
-Ela fala diretamente com a câmera como uma criadora real de TikTok.
+${style === "UGC Real"
+  ? `
+ESTILO UGC REAL
 
-CORPO E MÃOS:
+Uma única mulher brasileira apresenta o produto como uma criadora real de TikTok.
+
+Aparência natural.
 Anatomia humana realista.
 Duas mãos normais.
 Cinco dedos em cada mão.
 Sem dedos extras.
 Sem mãos duplicadas.
 Sem braços duplicados.
-Sem mãos torcidas.
-Sem deformações.
 
-MOVIMENTO:
-Movimentos simples e naturais.
-A modelo segura o produto de maneira fisicamente correta.
-Nada de movimentos rápidos ou impossíveis.
-Câmera parecida com celular gravando um vídeo real.
-Pequenas movimentações naturais da câmera.
+A câmera deve parecer um celular sendo segurado por uma pessoa real.
 
-VOZ:
+Movimentos naturais e simples.
+
 UMA ÚNICA VOZ FEMININA.
-A mesma voz durante todo o vídeo.
-Nenhuma segunda voz.
-Nenhum narrador.
-Nenhuma voz masculina.
-Nenhum eco.
-Nenhuma troca de voz.
 
-FALA:
-Português brasileiro.
-Tom de conversa.
-Natural.
+Fala em português brasileiro.
+Tom natural.
+Conversacional.
 Espontâneo.
 Confiante.
 Dinâmico.
 
-Para 8 segundos, usar UMA frase curta de aproximadamente 16 a 20 palavras.
+Criar uma fala curta com:
+GANCHO + BENEFÍCIO REAL + CTA.
 
-A fala NÃO pode ser arrastada.
-A fala NÃO pode ser lenta.
-A fala NÃO pode ter pausas artificiais.
-Não separar cada palavra.
+A fala deve ser rápida e natural.
 Não falar como locutora de propaganda.
+Não usar pausas artificiais.
 
-A modelo deve falar como se estivesse mostrando um achado para uma amiga.
-
-ESTRUTURA DA FALA:
-Gancho rápido + benefício real visível + CTA curto.
-
-IMPORTANTE:
-Não inventar benefícios que não possam ser confirmados pela imagem ou descrição do produto.
-
-EXEMPLO DE RITMO:
-"Gente, olha esse relógio! O conjunto é lindo e combina com tudo. Eu já colocaria no carrinho!"
-
-Usar o exemplo somente como referência de ritmo.
-Adaptar a fala ao produto real.
-
-SINCRONIZAÇÃO:
-A boca deve acompanhar exatamente a fala.
-A voz começa junto com a ação.
-A fala termina antes do final do vídeo.
-Não deixar silêncio longo.
-
-CENA:
-Começar mostrando a modelo e o produto imediatamente.
-Produto claramente visível nos primeiros segundos.
-A modelo apresenta o produto de forma espontânea.
-Finalizar com um gesto natural indicando o carrinho.
-
-SEM:
-Texto na tela.
-Legendas.
-Segunda pessoa.
-Segunda voz.
-Narrador.
-Produto diferente.
-Produto duplicado.
-Mãos deformadas.
-Dedos extras.
-Mudança de cor.
-Mudança de formato.
-Mudança de textura.
-Movimentos impossíveis.
-
-PRIORIDADE:
-1. Fidelidade absoluta ao produto.
-2. Anatomia correta.
-3. Uma única modelo.
-4. Uma única voz.
-5. Fala rápida e natural.
-6. Aparência de vídeo UGC real.
-`.trim();
-    } else if (style === "POV Real") {
-      promptText = `
-VIRALSHOP AI — POV REAL
-
-Vídeo vertical 9:16.
-Duração: ${duration}.
-
-A imagem enviada é a referência absoluta do produto.
-
-Manter o produto exatamente igual à referência:
-mesma cor, formato, textura, tamanho, proporções e detalhes.
-
-Não alterar o produto.
-Não duplicar o produto.
-Não inventar acessórios.
-Não deformar o produto.
-
-Criar uma gravação POV extremamente realista, como se uma pessoa estivesse segurando e mostrando o produto usando um celular.
-
-Movimentos naturais de mão.
-Anatomia correta.
-Sem dedos extras.
-Sem mãos duplicadas.
-Sem torções.
-
-UMA ÚNICA VOZ humana brasileira, caso exista fala.
-Sem narrador.
-Sem segunda voz.
-
-Fala curta, natural e dinâmica.
-Nada de fala lenta ou arrastada.
+A modelo deve parecer estar mostrando um achado para uma amiga.
 
 Começar mostrando o produto imediatamente.
+
+O produto precisa estar claramente visível durante a fala.
+
+Finalizar com um gesto natural indicando o carrinho.
+
+Sem texto na tela.
+Sem legendas.
+Sem segunda voz.
+Sem narrador.
+Sem pessoa adicional.
+`
+  : style === "POV Real"
+  ? `
+ESTILO POV REAL
+
+Criar uma gravação POV extremamente realista.
+
+A câmera deve parecer a visão de uma pessoa usando um celular.
+
+Mostrar o produto imediatamente.
+
+Mãos humanas realistas.
+Movimentos naturais.
+Anatomia correta.
+Cinco dedos em cada mão.
+Sem dedos extras.
+Sem mãos duplicadas.
+Sem deformações.
+
+Caso exista fala:
+UMA ÚNICA VOZ brasileira.
+Fala curta.
+Natural.
+Dinâmica.
+Sem narrador.
+Sem segunda voz.
 
 Sem texto na tela.
 Sem legendas.
 Sem efeitos exagerados.
 
 Prioridade máxima:
-produto idêntico à referência + movimento realista + aparência de vídeo gravado por uma pessoa.
-`.trim();
-    } else {
-      promptText = `
-VIRALSHOP AI — SHOWCASE REAL
+produto idêntico à referência + movimento natural + aparência de gravação real.
+`
+  : `
+ESTILO SHOWCASE REAL
 
-Vídeo vertical 9:16.
-Duração: ${duration}.
+Mostrar o produto de forma extremamente realista.
 
-Usar a imagem enviada como referência absoluta.
-
-O produto deve permanecer IDÊNTICO durante todo o vídeo.
-
-Não modificar:
-cor,
-formato,
-textura,
-tamanho,
-proporções,
-materiais,
-detalhes ou acessórios.
-
-Não duplicar o produto.
-Não deformar o produto.
-Não criar versões diferentes do produto.
-
-Mostrar o produto com movimentos de câmera suaves e fisicamente realistas.
-
+Movimentos suaves de câmera.
 Foco nos detalhes reais do produto.
 
-Sem transformações.
-Sem efeitos que alterem o produto.
-Sem texto na tela.
-Sem objetos inventados.
+O produto deve permanecer idêntico à referência.
 
-Se houver fala:
+Não transformar o produto.
+Não modificar materiais.
+Não criar objetos inexistentes.
+Não duplicar o produto.
+
+Caso exista fala:
 UMA ÚNICA VOZ brasileira.
 Natural.
 Curta.
 Dinâmica.
 Sem narrador.
 Sem segunda voz.
-Sem fala lenta.
 
-Prioridade máxima:
-fidelidade visual absoluta + movimento natural + aparência de gravação real.
+Sem texto na tela.
+Sem legendas.
+`
+}
+
+PRIORIDADES:
+
+1. Fidelidade absoluta ao produto.
+2. Anatomia humana correta.
+3. Movimento fisicamente realista.
+4. Aparência de vídeo gravado por uma pessoa real.
+5. Português brasileiro.
+6. Fala natural e dinâmica.
+7. Produto visível durante o vídeo.
+8. Nenhum texto ou legenda na tela.
+
+Não inventar características ou benefícios que não possam ser confirmados pela imagem do produto.
 `.trim();
+  }
+
+  async function generateVideo() {
+    if (!image) {
+      setError("Primeiro envie a foto do produto.");
+      return;
     }
 
-    setPrompt(promptText);
+    setLoading(true);
+    setError("");
+    setVideoUrl(null);
+    setProgress(0);
+    setStatus("Criando prompt...");
+
+    try {
+      const generatedPrompt = createPrompt();
+
+      setPrompt(generatedPrompt);
+      setStatus("Enviando produto para geração do vídeo...");
+
+      const seconds = Number(duration.replace(" segundos", ""));
+
+      const response = await fetch("/api/video", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image,
+          prompt: generatedPrompt,
+          seconds,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Não foi possível iniciar o vídeo.");
+      }
+
+      if (!data.id) {
+        throw new Error("A API não retornou o ID do vídeo.");
+      }
+
+      const videoId = data.id;
+
+      setStatus("Vídeo na fila de geração...");
+      setProgress(data.progress ?? 0);
+
+      let finished = false;
+
+      while (!finished) {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+
+        const statusResponse = await fetch(
+          `/api/video?id=${encodeURIComponent(videoId)}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+        const statusData = await statusResponse.json();
+
+        if (!statusResponse.ok) {
+          throw new Error(
+            statusData?.error || "Erro ao consultar o vídeo."
+          );
+        }
+
+        setProgress(statusData.progress ?? 0);
+
+        if (statusData.status === "completed") {
+          finished = true;
+
+          setStatus("Vídeo pronto!");
+
+          setVideoUrl(
+            `/api/video?id=${encodeURIComponent(videoId)}&download=1`
+          );
+        }
+
+        if (statusData.status === "failed") {
+          throw new Error(
+            statusData?.error || "A geração do vídeo falhou."
+          );
+        }
+
+        if (statusData.status === "queued") {
+          setStatus("Vídeo na fila...");
+        }
+
+        if (statusData.status === "in_progress") {
+          setStatus(
+            `Gerando vídeo... ${Math.round(statusData.progress ?? 0)}%`
+          );
+        }
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Ocorreu um erro ao gerar o vídeo."
+      );
+
+      setStatus("");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -258,15 +305,14 @@ fidelidade visual absoluta + movimento natural + aparência de gravação real.
           <p>Seu criador de vídeos para TikTok Shop</p>
         </div>
 
-        <div className="version">V1.2</div>
+        <div className="version">V1.3</div>
       </header>
 
       <section className="hero">
         <h1>Crie seu próximo vídeo viral.</h1>
 
         <p>
-          Envie o produto, escolha o estilo e gere um prompt focado em
-          realismo, fidelidade e conversão.
+          Envie o produto, escolha o estilo e gere seu vídeo automaticamente.
         </p>
       </section>
 
@@ -301,17 +347,13 @@ fidelidade visual absoluta + movimento natural + aparência de gravação real.
               (item) => (
                 <button
                   key={item}
-                  className={style === item ? "option active" : "option"}
+                  type="button"
+                  className={
+                    style === item ? "option active" : "option"
+                  }
                   onClick={() => setStyle(item)}
+                  disabled={loading}
                 >
-                  <span>
-                    {item === "UGC Real"
-                      ? "👩"
-                      : item === "POV Real"
-                      ? "📱"
-                      : "✨"}
-                  </span>
-
                   {item}
                 </button>
               )
@@ -323,16 +365,18 @@ fidelidade visual absoluta + movimento natural + aparência de gravação real.
           <h2>3. Duração</h2>
 
           <div className="duration">
-            {(["8 segundos", "16 segundos", "24 segundos"] as Duration[]).map(
+            {(["4 segundos", "8 segundos", "12 segundos"] as Duration[]).map(
               (item) => (
                 <button
                   key={item}
+                  type="button"
                   className={
                     duration === item
                       ? "duration-btn active"
                       : "duration-btn"
                   }
                   onClick={() => setDuration(item)}
+                  disabled={loading}
                 >
                   {item}
                 </button>
@@ -341,16 +385,81 @@ fidelidade visual absoluta + movimento natural + aparência de gravação real.
           </div>
         </div>
 
-        <button className="generate" onClick={generatePrompt}>
-          🚀 GERAR PROMPT
+        <button
+          className="generate"
+          type="button"
+          onClick={generateVideo}
+          disabled={loading}
+        >
+          {loading ? "GERANDO VÍDEO..." : "GERAR VÍDEO"}
         </button>
+
+        {status && (
+          <div className="card">
+            <h2>{status}</h2>
+
+            {loading && (
+              <div>
+                <p>{Math.round(progress)}%</p>
+
+                <progress
+                  value={progress}
+                  max="100"
+                  style={{ width: "100%" }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className="card">
+            <h2>Erro</h2>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {videoUrl && (
+          <div className="card result">
+            <div className="result-header">
+              <h2>Seu vídeo está pronto</h2>
+            </div>
+
+            <video
+              src={videoUrl}
+              controls
+              playsInline
+              style={{
+                width: "100%",
+                maxWidth: "420px",
+                borderRadius: "16px",
+              }}
+            />
+
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="generate"
+              style={{
+                display: "block",
+                textAlign: "center",
+                textDecoration: "none",
+                marginTop: "16px",
+              }}
+            >
+              ABRIR VÍDEO
+            </a>
+          </div>
+        )}
 
         {prompt && (
           <div className="card result">
             <div className="result-header">
-              <h2>Seu prompt está pronto</h2>
+              <h2>Prompt utilizado</h2>
 
               <button
+                type="button"
                 onClick={() => navigator.clipboard.writeText(prompt)}
                 className="copy"
               >
@@ -369,4 +478,3 @@ fidelidade visual absoluta + movimento natural + aparência de gravação real.
     </main>
   );
 }
-
