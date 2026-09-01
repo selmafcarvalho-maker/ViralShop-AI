@@ -5,23 +5,41 @@ const BASE = "https://api.openai.com/v1/videos";
 export async function POST(req: NextRequest) {
   try {
     const key = process.env.OPENAI_API_KEY;
+
     if (!key) {
       return NextResponse.json(
-        { error: "OPENAI_API_KEY não configurada na Vercel." },
+        {
+          error: "OPENAI_API_KEY não configurada na Vercel.",
+        },
         { status: 500 }
       );
     }
 
-    const { image, prompt, seconds = 8 } = await req.json();
+    const body = await req.json();
+
+    const image = body?.image;
+    const prompt = body?.prompt;
+    const seconds = String(body?.seconds ?? 8);
 
     if (!image) {
       return NextResponse.json(
-        { error: "Envie a foto do produto." },
+        {
+          error: "Envie a foto do produto.",
+        },
         { status: 400 }
       );
     }
 
-    const res = await fetch(BASE, {
+    if (!["4", "8", "12"].includes(seconds)) {
+      return NextResponse.json(
+        {
+          error: "A duração deve ser 4, 8 ou 12 segundos.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(BASE, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${key}`,
@@ -29,8 +47,10 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "sora-2",
-        prompt,
-        seconds: String(seconds),
+        prompt:
+          prompt ||
+          "Crie um vídeo vertical realista usando a imagem enviada como referência.",
+        seconds,
         size: "720x1280",
         input_reference: {
           image_url: image,
@@ -38,15 +58,16 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
+    if (!response.ok) {
       return NextResponse.json(
         {
           error:
-            data?.error?.message || "Falha ao iniciar o vídeo.",
+            data?.error?.message ||
+            "Falha ao iniciar a geração do vídeo.",
         },
-        { status: res.status }
+        { status: response.status }
       );
     }
 
@@ -55,11 +76,13 @@ export async function POST(req: NextRequest) {
       status: data.status,
       progress: data.progress ?? 0,
     });
-  } catch (e) {
+  } catch (error) {
     return NextResponse.json(
       {
         error:
-          e instanceof Error ? e.message : "Erro inesperado.",
+          error instanceof Error
+            ? error.message
+            : "Erro inesperado ao criar o vídeo.",
       },
       { status: 500 }
     );
@@ -69,18 +92,99 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const key = process.env.OPENAI_API_KEY;
-    const id = req.nextUrl.searchParams.get("id");
 
-    if (!key || !id) {
+    if (!key) {
       return NextResponse.json(
-        { error: "Configuração ou ID ausente." },
+        {
+          error: "OPENAI_API_KEY não configurada na Vercel.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const id = req.nextUrl.searchParams.get("id");
+    const download =
+      req.nextUrl.searchParams.get("download") === "1";
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          error: "ID do vídeo não informado.",
+        },
         { status: 400 }
       );
     }
 
-    const res = await fetch(
+    /*
+     * DOWNLOAD DO MP4
+     *
+     * Quando o page.tsx chama:
+     *
+     * /api/video?id=VIDEO_ID&download=1
+     *
+     * buscamos o conteúdo do vídeo na OpenAI
+     * e devolvemos o MP4 para o navegador.
+     */
+
+    if (download) {
+      const contentResponse = await fetch(
+        `${BASE}/${encodeURIComponent(id)}/content`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${key}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!contentResponse.ok) {
+        const errorText = await contentResponse.text();
+
+        let errorMessage =
+          "Não foi possível baixar o vídeo.";
+
+        try {
+          const errorData = JSON.parse(errorText);
+
+          errorMessage =
+            errorData?.error?.message ||
+            errorMessage;
+        } catch {
+          if (errorText) {
+            errorMessage = errorText;
+          }
+        }
+
+        return NextResponse.json(
+          {
+            error: errorMessage,
+          },
+          {
+            status: contentResponse.status,
+          }
+        );
+      }
+
+      return new Response(contentResponse.body, {
+        status: 200,
+        headers: {
+          "Content-Type":
+            contentResponse.headers.get("content-type") ||
+            "video/mp4",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
+    /*
+     * CONSULTA DO STATUS
+     */
+
+    const response = await fetch(
       `${BASE}/${encodeURIComponent(id)}`,
       {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${key}`,
         },
@@ -88,16 +192,16 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
+    if (!response.ok) {
       return NextResponse.json(
         {
           error:
             data?.error?.message ||
-            "Falha ao consultar vídeo.",
+            "Falha ao consultar o vídeo.",
         },
-        { status: res.status }
+        { status: response.status }
       );
     }
 
@@ -107,11 +211,13 @@ export async function GET(req: NextRequest) {
       progress: data.progress ?? 0,
       error: data.error?.message ?? null,
     });
-  } catch (e) {
+  } catch (error) {
     return NextResponse.json(
       {
         error:
-          e instanceof Error ? e.message : "Erro inesperado.",
+          error instanceof Error
+            ? error.message
+            : "Erro inesperado.",
       },
       { status: 500 }
     );
