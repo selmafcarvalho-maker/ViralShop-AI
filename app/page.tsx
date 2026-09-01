@@ -9,10 +9,12 @@ export default function Home() {
   const [image, setImage] = useState<string | null>(null);
   const [style, setStyle] = useState<VideoStyle>("UGC Real");
   const [duration, setDuration] = useState<Duration>("8 segundos");
+
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,166 +29,99 @@ export default function Home() {
       setImage(reader.result as string);
       setVideoUrl(null);
       setError("");
+      setProgress(0);
+      setStatus("");
     };
 
     reader.readAsDataURL(file);
   }
 
   function createPrompt() {
-    const seconds = duration.replace(" segundos", "");
+    if (style === "UGC Real") {
+      return `
+Criar um vídeo UGC extremamente realista para TikTok Shop.
+
+Uma pessoa brasileira apresenta o produto de forma natural, espontânea e convincente.
+
+O produto deve permanecer exatamente igual à imagem de referência.
+Não alterar cor, formato, tamanho, textura, embalagem ou detalhes.
+
+A gravação deve parecer feita por uma pessoa real usando um celular.
+Movimentos naturais de câmera, mãos humanas reais, iluminação natural e ambiente cotidiano.
+
+A pessoa deve falar em português do Brasil, com voz natural e tom de conversa.
+
+Começar com uma frase forte e dinâmica nos primeiros segundos.
+Mostrar o produto de perto e demonstrar sua utilização de forma natural.
+Destacar benefícios reais sem fazer promessas exageradas.
+
+Finalizar com uma chamada natural para conferir o produto no carrinho do TikTok Shop.
+
+Não adicionar texto na tela.
+Não adicionar legendas.
+Não adicionar emojis.
+Não criar mãos extras.
+Não modificar o produto.
+      `.trim();
+    }
+
+    if (style === "POV Real") {
+      return `
+Criar um vídeo POV extremamente realista para TikTok Shop.
+
+A câmera deve parecer a visão de uma pessoa real segurando um celular.
+
+Mostrar apenas ações humanas naturais e interação real com o produto.
+O produto deve permanecer exatamente igual à imagem de referência.
+
+Movimentos naturais das mãos e da câmera.
+Iluminação realista.
+Ambiente cotidiano.
+Nada deve parecer publicidade artificial ou animação.
+
+A pessoa deve falar em português do Brasil com voz espontânea e natural.
+
+Começar imediatamente com um gancho forte.
+Demonstrar o produto de maneira rápida e visual.
+Mostrar por que ele chama atenção e quais são seus benefícios reais.
+
+Finalizar incentivando a pessoa a conferir o produto no carrinho do TikTok Shop.
+
+Não adicionar texto na tela.
+Não adicionar legendas.
+Não adicionar emojis.
+Não criar mãos extras.
+Não modificar cor, formato, textura ou embalagem do produto.
+      `.trim();
+    }
 
     return `
-VIRALSHOP AI — ${style.toUpperCase()}
+Criar um vídeo Showcase extremamente realista para TikTok Shop.
 
-Criar vídeo vertical 9:16.
+O produto deve ser o protagonista absoluto do vídeo.
 
-DURAÇÃO EXATA: ${seconds} segundos.
+Usar movimentos de câmera suaves e naturais, aproximando e afastando do produto para mostrar seus detalhes.
 
-A FOTO ENVIADA É A REFERÊNCIA ABSOLUTA DO PRODUTO.
+Manter o produto exatamente igual à imagem de referência.
+Não alterar cor, formato, tamanho, textura, embalagem ou qualquer característica.
 
-O produto deve permanecer visualmente IDÊNTICO à imagem durante todo o vídeo.
+Criar aparência de gravação real feita com celular.
+Iluminação natural e ambiente realista.
 
-Não alterar:
-- cor
-- formato
-- textura
-- tamanho
-- proporções
-- materiais
-- detalhes
-- embalagem
-- acessórios
+Mostrar detalhes importantes do produto e sua utilização de maneira visual e convincente.
 
-Não trocar o produto.
-Não redesenhar o produto.
-Não inventar outro produto.
-Não duplicar o produto.
-Não deformar o produto.
+Se houver fala, usar português do Brasil com voz humana natural.
 
-A mesma referência deve ser respeitada do primeiro ao último frame.
+O vídeo deve parecer conteúdo real de TikTok, não um comercial tradicional.
 
-${style === "UGC Real"
-  ? `
-ESTILO UGC REAL
+Finalizar mostrando claramente o produto e incentivando a pessoa a conferir o item no carrinho do TikTok Shop.
 
-Uma única mulher brasileira apresenta o produto como uma criadora real de TikTok.
-
-Aparência natural.
-Anatomia humana realista.
-Duas mãos normais.
-Cinco dedos em cada mão.
-Sem dedos extras.
-Sem mãos duplicadas.
-Sem braços duplicados.
-
-A câmera deve parecer um celular sendo segurado por uma pessoa real.
-
-Movimentos naturais e simples.
-
-UMA ÚNICA VOZ FEMININA.
-
-Fala em português brasileiro.
-Tom natural.
-Conversacional.
-Espontâneo.
-Confiante.
-Dinâmico.
-
-Criar uma fala curta com:
-GANCHO + BENEFÍCIO REAL + CTA.
-
-A fala deve ser rápida e natural.
-Não falar como locutora de propaganda.
-Não usar pausas artificiais.
-
-A modelo deve parecer estar mostrando um achado para uma amiga.
-
-Começar mostrando o produto imediatamente.
-
-O produto precisa estar claramente visível durante a fala.
-
-Finalizar com um gesto natural indicando o carrinho.
-
-Sem texto na tela.
-Sem legendas.
-Sem segunda voz.
-Sem narrador.
-Sem pessoa adicional.
-`
-  : style === "POV Real"
-  ? `
-ESTILO POV REAL
-
-Criar uma gravação POV extremamente realista.
-
-A câmera deve parecer a visão de uma pessoa usando um celular.
-
-Mostrar o produto imediatamente.
-
-Mãos humanas realistas.
-Movimentos naturais.
-Anatomia correta.
-Cinco dedos em cada mão.
-Sem dedos extras.
-Sem mãos duplicadas.
-Sem deformações.
-
-Caso exista fala:
-UMA ÚNICA VOZ brasileira.
-Fala curta.
-Natural.
-Dinâmica.
-Sem narrador.
-Sem segunda voz.
-
-Sem texto na tela.
-Sem legendas.
-Sem efeitos exagerados.
-
-Prioridade máxima:
-produto idêntico à referência + movimento natural + aparência de gravação real.
-`
-  : `
-ESTILO SHOWCASE REAL
-
-Mostrar o produto de forma extremamente realista.
-
-Movimentos suaves de câmera.
-Foco nos detalhes reais do produto.
-
-O produto deve permanecer idêntico à referência.
-
-Não transformar o produto.
-Não modificar materiais.
-Não criar objetos inexistentes.
-Não duplicar o produto.
-
-Caso exista fala:
-UMA ÚNICA VOZ brasileira.
-Natural.
-Curta.
-Dinâmica.
-Sem narrador.
-Sem segunda voz.
-
-Sem texto na tela.
-Sem legendas.
-`
-}
-
-PRIORIDADES:
-
-1. Fidelidade absoluta ao produto.
-2. Anatomia humana correta.
-3. Movimento fisicamente realista.
-4. Aparência de vídeo gravado por uma pessoa real.
-5. Português brasileiro.
-6. Fala natural e dinâmica.
-7. Produto visível durante o vídeo.
-8. Nenhum texto ou legenda na tela.
-
-Não inventar características ou benefícios que não possam ser confirmados pela imagem do produto.
-`.trim();
+Não adicionar texto na tela.
+Não adicionar legendas.
+Não adicionar emojis.
+Não criar mãos extras.
+Não modificar o produto.
+    `.trim();
   }
 
   async function generateVideo() {
@@ -199,7 +134,6 @@ Não inventar características ou benefícios que não possam ser confirmados pe
     setError("");
     setVideoUrl(null);
     setProgress(0);
-    setStatus("Criando prompt...");
 
     try {
       const generatedPrompt = createPrompt();
@@ -224,7 +158,9 @@ Não inventar características ou benefícios que não possam ser confirmados pe
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error || "Não foi possível iniciar o vídeo.");
+        throw new Error(
+          data?.error || "Não foi possível iniciar a geração do vídeo."
+        );
       }
 
       if (!data.id) {
@@ -237,13 +173,17 @@ Não inventar características ou benefícios que não possam ser confirmados pe
       setProgress(data.progress ?? 0);
 
       let finished = false;
+      let attempts = 0;
 
-      while (!finished) {
+      while (!finished && attempts < 120) {
+        attempts++;
+
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         const statusResponse = await fetch(
           `/api/video?id=${encodeURIComponent(videoId)}`,
           {
+            method: "GET",
             cache: "no-store",
           }
         );
@@ -262,27 +202,34 @@ Não inventar características ou benefícios que não possam ser confirmados pe
           finished = true;
 
           setStatus("Vídeo pronto!");
+          setProgress(100);
 
           setVideoUrl(
             `/api/video?id=${encodeURIComponent(videoId)}&download=1`
           );
+
+          break;
         }
 
-        if (statusData.status === "failed") {
+        if (
+          statusData.status === "failed" ||
+          statusData.status === "cancelled"
+        ) {
           throw new Error(
-            statusData?.error || "A geração do vídeo falhou."
+            statusData?.error ||
+              "A geração do vídeo não foi concluída."
           );
         }
 
-        if (statusData.status === "queued") {
-          setStatus("Vídeo na fila...");
-        }
+        setStatus(
+          `Gerando vídeo... ${statusData.progress ?? 0}%`
+        );
+      }
 
-        if (statusData.status === "in_progress") {
-          setStatus(
-            `Gerando vídeo... ${Math.round(statusData.progress ?? 0)}%`
-          );
-        }
+      if (!finished) {
+        throw new Error(
+          "A geração demorou mais que o esperado. Tente novamente."
+        );
       }
     } catch (err) {
       setError(
@@ -298,132 +245,280 @@ Não inventar características ou benefícios que não possam ser confirmados pe
   }
 
   return (
-    <main className="app">
-      <header className="header">
-        <div>
-          <div className="logo">ViralShop AI</div>
-          <p>Seu criador de vídeos para TikTok Shop</p>
-        </div>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "#0b0b0f",
+        color: "#fff",
+        padding: "30px 16px",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 720,
+          margin: "0 auto",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: 32,
+            fontWeight: 800,
+            marginBottom: 8,
+          }}
+        >
+          ViralShop AI
+        </h1>
 
-        <div className="version">V1.3</div>
-      </header>
-
-      <section className="hero">
-        <h1>Crie seu próximo vídeo viral.</h1>
-
-        <p>
-          Envie o produto, escolha o estilo e gere seu vídeo automaticamente.
+        <p
+          style={{
+            color: "#aaa",
+            marginBottom: 30,
+          }}
+        >
+          Gere vídeos realistas para TikTok Shop
         </p>
-      </section>
 
-      <section className="workspace">
-        <div className="card upload-card">
-          <h2>1. Produto</h2>
+        <section
+          style={{
+            background: "#15151b",
+            borderRadius: 18,
+            padding: 22,
+            marginBottom: 18,
+          }}
+        >
+          <h2 style={{ fontSize: 18, marginBottom: 14 }}>
+            1. Foto do produto
+          </h2>
 
-          <label className="upload">
+          <label
+            style={{
+              display: "block",
+              border: "2px dashed #444",
+              borderRadius: 14,
+              padding: 25,
+              textAlign: "center",
+              cursor: "pointer",
+            }}
+          >
             {image ? (
-              <img src={image} alt="Produto enviado" />
+              <img
+                src={image}
+                alt="Produto"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 350,
+                  objectFit: "contain",
+                  borderRadius: 12,
+                }}
+              />
             ) : (
-              <>
-                <span className="upload-icon">+</span>
-                <strong>Enviar foto do produto</strong>
-                <small>PNG, JPG ou WEBP</small>
-              </>
+              <span style={{ color: "#aaa" }}>
+                Clique para enviar a foto do produto
+              </span>
             )}
 
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/*"
               onChange={handleImage}
+              style={{ display: "none" }}
             />
           </label>
-        </div>
+        </section>
 
-        <div className="card">
-          <h2>2. Estilo do vídeo</h2>
+        <section
+          style={{
+            background: "#15151b",
+            borderRadius: 18,
+            padding: 22,
+            marginBottom: 18,
+          }}
+        >
+          <h2 style={{ fontSize: 18, marginBottom: 14 }}>
+            2. Estilo do vídeo
+          </h2>
 
-          <div className="options">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 10,
+            }}
+          >
             {(["UGC Real", "POV Real", "Showcase"] as VideoStyle[]).map(
               (item) => (
                 <button
                   key={item}
                   type="button"
-                  className={
-                    style === item ? "option active" : "option"
-                  }
                   onClick={() => setStyle(item)}
-                  disabled={loading}
+                  style={{
+                    padding: "14px 8px",
+                    borderRadius: 12,
+                    border:
+                      style === item
+                        ? "2px solid #fff"
+                        : "1px solid #444",
+                    background:
+                      style === item ? "#fff" : "#202027",
+                    color:
+                      style === item ? "#000" : "#fff",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
                 >
                   {item}
                 </button>
               )
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="card">
-          <h2>3. Duração</h2>
+        <section
+          style={{
+            background: "#15151b",
+            borderRadius: 18,
+            padding: 22,
+            marginBottom: 18,
+          }}
+        >
+          <h2 style={{ fontSize: 18, marginBottom: 14 }}>
+            3. Duração
+          </h2>
 
-          <div className="duration">
-            {(["4 segundos", "8 segundos", "12 segundos"] as Duration[]).map(
-              (item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 10,
+            }}
+          >
+            {(
+              ["4 segundos", "8 segundos", "12 segundos"] as Duration[]
+            ).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setDuration(item)}
+                style={{
+                  padding: 14,
+                  borderRadius: 12,
+                  border:
                     duration === item
-                      ? "duration-btn active"
-                      : "duration-btn"
-                  }
-                  onClick={() => setDuration(item)}
-                  disabled={loading}
-                >
-                  {item}
-                </button>
-              )
-            )}
+                      ? "2px solid #fff"
+                      : "1px solid #444",
+                  background:
+                    duration === item ? "#fff" : "#202027",
+                  color:
+                    duration === item ? "#000" : "#fff",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                {item}
+              </button>
+            ))}
           </div>
-        </div>
+        </section>
 
         <button
-          className="generate"
           type="button"
           onClick={generateVideo}
-          disabled={loading}
+          disabled={loading || !image}
+          style={{
+            width: "100%",
+            padding: "18px",
+            borderRadius: 14,
+            border: "none",
+            background:
+              loading || !image ? "#444" : "#fff",
+            color:
+              loading || !image ? "#aaa" : "#000",
+            fontSize: 18,
+            fontWeight: 800,
+            cursor:
+              loading || !image
+                ? "not-allowed"
+                : "pointer",
+          }}
         >
-          {loading ? "GERANDO VÍDEO..." : "GERAR VÍDEO"}
+          {loading ? "GERANDO VÍDEO..." : "🚀 GERAR VÍDEO"}
         </button>
 
         {status && (
-          <div className="card">
-            <h2>{status}</h2>
+          <div
+            style={{
+              marginTop: 20,
+              background: "#15151b",
+              borderRadius: 14,
+              padding: 18,
+            }}
+          >
+            <div style={{ marginBottom: 10 }}>
+              {status}
+            </div>
 
-            {loading && (
-              <div>
-                <p>{Math.round(progress)}%</p>
+            <div
+              style={{
+                height: 10,
+                background: "#292932",
+                borderRadius: 10,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.min(progress, 100)}%`,
+                  height: "100%",
+                  background: "#fff",
+                  transition: "width 0.4s ease",
+                }}
+              />
+            </div>
 
-                <progress
-                  value={progress}
-                  max="100"
-                  style={{ width: "100%" }}
-                />
-              </div>
-            )}
+            <div
+              style={{
+                marginTop: 8,
+                color: "#aaa",
+                fontSize: 13,
+              }}
+            >
+              {progress}%
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="card">
-            <h2>Erro</h2>
-            <p>{error}</p>
+          <div
+            style={{
+              marginTop: 20,
+              padding: 16,
+              borderRadius: 12,
+              background: "#321719",
+              color: "#ffb4b4",
+            }}
+          >
+            {error}
           </div>
         )}
 
         {videoUrl && (
-          <div className="card result">
-            <div className="result-header">
-              <h2>Seu vídeo está pronto</h2>
-            </div>
+          <section
+            style={{
+              marginTop: 24,
+              background: "#15151b",
+              borderRadius: 18,
+              padding: 18,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 20,
+                marginBottom: 15,
+              }}
+            >
+              Seu vídeo está pronto
+            </h2>
 
             <video
               src={videoUrl}
@@ -431,50 +526,59 @@ Não inventar características ou benefícios que não possam ser confirmados pe
               playsInline
               style={{
                 width: "100%",
-                maxWidth: "420px",
-                borderRadius: "16px",
+                maxHeight: 700,
+                borderRadius: 14,
+                background: "#000",
               }}
             />
 
             <a
               href={videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="generate"
+              download="viralshop-video.mp4"
               style={{
                 display: "block",
+                marginTop: 15,
                 textAlign: "center",
+                padding: 15,
+                borderRadius: 12,
+                background: "#fff",
+                color: "#000",
                 textDecoration: "none",
-                marginTop: "16px",
+                fontWeight: 800,
               }}
             >
-              ABRIR VÍDEO
+              BAIXAR VÍDEO
             </a>
-          </div>
+          </section>
         )}
 
         {prompt && (
-          <div className="card result">
-            <div className="result-header">
-              <h2>Prompt utilizado</h2>
+          <details style={{ marginTop: 20 }}>
+            <summary
+              style={{
+                cursor: "pointer",
+                color: "#aaa",
+              }}
+            >
+              Ver prompt utilizado
+            </summary>
 
-              <button
-                type="button"
-                onClick={() => navigator.clipboard.writeText(prompt)}
-                className="copy"
-              >
-                Copiar
-              </button>
-            </div>
-
-            <pre>{prompt}</pre>
-          </div>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                background: "#15151b",
+                padding: 15,
+                borderRadius: 12,
+                marginTop: 10,
+                color: "#bbb",
+                fontSize: 12,
+              }}
+            >
+              {prompt}
+            </pre>
+          </details>
         )}
-      </section>
-
-      <footer>
-        ViralShop AI · Criado para acelerar sua produção de TikTok Shop
-      </footer>
+      </div>
     </main>
   );
 }
