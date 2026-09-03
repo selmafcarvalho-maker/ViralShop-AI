@@ -8,9 +8,7 @@ export async function POST(req: NextRequest) {
 
     if (!key) {
       return NextResponse.json(
-        {
-          error: "OPENAI_API_KEY não configurada na Vercel.",
-        },
+        { error: "OPENAI_API_KEY não configurada na Vercel." },
         { status: 500 }
       );
     }
@@ -23,39 +21,78 @@ export async function POST(req: NextRequest) {
 
     if (!image) {
       return NextResponse.json(
-        {
-          error: "Envie a foto do produto.",
-        },
+        { error: "Envie a foto do produto." },
         { status: 400 }
       );
     }
 
     if (!["4", "8", "12"].includes(seconds)) {
       return NextResponse.json(
+        { error: "A duração deve ser 4, 8 ou 12 segundos." },
+        { status: 400 }
+      );
+    }
+
+    /*
+     * A imagem chega do page.tsx como Data URL:
+     * data:image/png;base64,....
+     *
+     * A API de vídeos precisa receber a referência
+     * como arquivo multipart/form-data.
+     */
+
+    const match = image.match(
+      /^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/
+    );
+
+    if (!match) {
+      return NextResponse.json(
         {
-          error: "A duração deve ser 4, 8 ou 12 segundos.",
+          error:
+            "Formato da imagem inválido. Use PNG, JPG, JPEG ou WEBP.",
         },
         { status: 400 }
       );
     }
 
+    const mimeType = match[1] === "image/jpg" ? "image/jpeg" : match[1];
+    const base64Data = match[2];
+
+    const buffer = Buffer.from(base64Data, "base64");
+
+    const imageBlob = new Blob([buffer], {
+      type: mimeType,
+    });
+
+    const form = new FormData();
+
+    form.append("model", "sora-2");
+
+    form.append(
+      "prompt",
+      prompt ||
+        "Create a realistic vertical TikTok Shop product video using the reference image. Preserve the exact product appearance. Natural human interaction, realistic movement, Brazilian Portuguese speech when appropriate. End with a natural call to action inviting the viewer to tap the orange shopping cart."
+    );
+
+    form.append("seconds", seconds);
+    form.append("size", "720x1280");
+
+    form.append(
+      "input_reference",
+      imageBlob,
+      mimeType === "image/webp"
+        ? "produto.webp"
+        : mimeType === "image/png"
+        ? "produto.png"
+        : "produto.jpg"
+    );
+
     const response = await fetch(BASE, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "sora-2",
-        prompt:
-          prompt ||
-          "Crie um vídeo vertical realista usando a imagem enviada como referência.",
-        seconds,
-        size: "720x1280",
-        input_reference: {
-          image_url: image,
-        },
-      }),
+      body: form,
     });
 
     const data = await response.json();
@@ -77,6 +114,8 @@ export async function POST(req: NextRequest) {
       progress: data.progress ?? 0,
     });
   } catch (error) {
+    console.error("VIDEO POST ERROR:", error);
+
     return NextResponse.json(
       {
         error:
@@ -117,13 +156,6 @@ export async function GET(req: NextRequest) {
 
     /*
      * DOWNLOAD DO MP4
-     *
-     * Quando o page.tsx chama:
-     *
-     * /api/video?id=VIDEO_ID&download=1
-     *
-     * buscamos o conteúdo do vídeo na OpenAI
-     * e devolvemos o MP4 para o navegador.
      */
 
     if (download) {
@@ -157,12 +189,8 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json(
-          {
-            error: errorMessage,
-          },
-          {
-            status: contentResponse.status,
-          }
+          { error: errorMessage },
+          { status: contentResponse.status }
         );
       }
 
@@ -212,6 +240,8 @@ export async function GET(req: NextRequest) {
       error: data.error?.message ?? null,
     });
   } catch (error) {
+    console.error("VIDEO GET ERROR:", error);
+
     return NextResponse.json(
       {
         error:
