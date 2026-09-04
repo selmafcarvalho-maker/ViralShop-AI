@@ -18,7 +18,93 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleImage(event: ChangeEvent<HTMLInputElement>) {
+  function handleImage(event: ChangeEvent<HTMLInputElement>function handleImage(event: ChangeEvent<HTMLInputElement>) {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  const allowedTypes = [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    setError("Use uma imagem PNG, JPG, JPEG ou WEBP.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const img = new Image();
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+
+      // Tamanho padrão 9:16
+      const targetWidth = 720;
+      const targetHeight = 1280;
+
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        setError("Não foi possível preparar a imagem.");
+        return;
+      }
+
+      // Fundo branco para preservar a imagem inteira
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+      // Mantém a proporção original da foto
+      const scale = Math.min(
+        targetWidth / img.width,
+        targetHeight / img.height
+      );
+
+      const newWidth = img.width * scale;
+      const newHeight = img.height * scale;
+
+      // Centraliza a imagem
+      const x = (targetWidth - newWidth) / 2;
+      const y = (targetHeight - newHeight) / 2;
+
+      ctx.drawImage(
+        img,
+        x,
+        y,
+        newWidth,
+        newHeight
+      );
+
+      // Converte para PNG 9:16
+      const finalImage = canvas.toDataURL(
+        "image/png",
+        1.0
+      );
+
+      setImage(finalImage);
+      setError("");
+    };
+
+    img.onerror = () => {
+      setError("Não foi possível carregar a imagem.");
+    };
+
+    img.src = reader.result as string;
+  };
+
+  reader.onerror = () => {
+    setError("Não foi possível ler a imagem.");
+  };
+
+  reader.readAsDataURL(file);
+}) {
     const file = event.target.files?.[0];
 
     if (!file) return;
