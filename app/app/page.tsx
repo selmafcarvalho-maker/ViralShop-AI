@@ -1,272 +1,248 @@
-```tsx
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 
 type VideoStyle = "UGC Vendedor" | "POV Vendedor" | "Showcase";
-type Duration = "4 segundos" | "8 segundos" | "12 segundos";
+
+const styles: VideoStyle[] = [
+  "UGC Vendedor",
+  "POV Vendedor",
+  "Showcase",
+];
+
+const durations = [4, 8, 12];
 
 export default function Home() {
-  const [image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<string>("");
   const [style, setStyle] = useState<VideoStyle>("UGC Vendedor");
-  const [duration, setDuration] = useState<Duration>("8 segundos");
-
-  const [prompt, setPrompt] = useState("");
-  const [status, setStatus] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-
+  const [seconds, setSeconds] = useState<number>(8);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
 
-  // ==========================================
-  // PREPARAR FOTO EM 9:16
-  // ==========================================
-
-  function handleImage(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    const allowedTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/webp",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      setError("Use uma imagem PNG, JPG, JPEG ou WEBP.");
-      return;
-    }
-
-    setError("");
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
+  async function prepareImage(file: File) {
+    return new Promise<string>((resolve, reject) => {
       const img = new Image();
 
       img.onload = () => {
-        const width = 720;
-        const height = 1280;
-
         const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
+
+        canvas.width = 720;
+        canvas.height = 1280;
 
         const ctx = canvas.getContext("2d");
 
         if (!ctx) {
-          setError("Não foi possível preparar a imagem.");
+          reject(new Error("Não foi possível preparar a imagem."));
           return;
         }
 
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, 720, 1280);
 
         const scale = Math.min(
-          width / img.width,
-          height / img.height
+          720 / img.width,
+          1280 / img.height
         );
 
-        const newWidth = img.width * scale;
-        const newHeight = img.height * scale;
+        const width = img.width * scale;
+        const height = img.height * scale;
 
-        const x = (width - newWidth) / 2;
-        const y = (height - newHeight) / 2;
+        const x = (720 - width) / 2;
+        const y = (1280 - height) / 2;
 
-        ctx.drawImage(
-          img,
-          x,
-          y,
-          newWidth,
-          newHeight
-        );
+        ctx.drawImage(img, x, y, width, height);
 
-        const finalImage = canvas.toDataURL(
-          "image/png",
-          1
-        );
-
-        setImage(finalImage);
-        setVideoUrl(null);
-        setProgress(0);
-        setStatus("");
+        resolve(canvas.toDataURL("image/png"));
       };
 
       img.onerror = () => {
-        setError("Não foi possível carregar a imagem.");
+        reject(new Error("Não foi possível carregar a imagem."));
       };
 
-      img.src = reader.result as string;
-    };
-
-    reader.onerror = () => {
-      setError("Não foi possível ler a imagem.");
-    };
-
-    reader.readAsDataURL(file);
+      img.src = URL.createObjectURL(file);
+    });
   }
 
-  // ==========================================
-  // PROMPT CURTO E VENDEDOR
-  // ==========================================
+  async function handleImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
 
-  function createSellerPrompt() {
-    const seconds = Number(
-      duration.replace(" segundos", "")
-    );
+    if (!file) return;
 
+    try {
+      setError("");
+      setVideoUrl("");
+      setStatus("Preparando imagem...");
+
+      const prepared = await prepareImage(file);
+
+      setImage(prepared);
+      setStatus("Imagem pronta!");
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível preparar a imagem.");
+      setStatus("");
+    }
+  }
+
+  function createPrompt() {
     const base = `
 Create an ultra-realistic Brazilian TikTok Shop selling video.
 
-Use the reference image as the absolute truth.
-The product must remain EXACTLY identical to the image.
-Do not change its color, shape, size, texture, material,
-packaging, logo, labels or details.
-
+FORMAT:
 Vertical 9:16.
-Real smartphone UGC style.
-Natural Brazilian environment.
-Natural human movements.
-Natural realistic hands.
-Authentic facial expressions.
-Realistic lighting.
+Real smartphone camera.
+Natural lighting.
+Realistic Brazilian creator.
+Natural human movement.
+Natural facial expressions.
+Natural hands.
+No cinematic commercial look.
 
-Brazilian Portuguese spoken dialogue only.
-Natural human voice.
-No robotic voice.
-No narrator.
-No text on screen.
-No subtitles.
-No captions.
-No emojis.
-No graphics.
+PRODUCT:
+The product must remain EXACTLY identical to the reference image.
+Do not change its color, shape, size, texture, packaging, logo, label or details.
+Do not invent accessories.
+Do not create extra products.
+
+AUDIO:
+AUDIO IS REQUIRED.
+The creator MUST speak in Brazilian Portuguese.
+Natural Brazilian Portuguese voice.
+Natural conversational tone.
+Do not generate a silent video.
+Do not replace speech with music.
+
+TEXT:
+NO subtitles.
+NO captions.
+NO text on screen.
+NO emojis.
+NO banners.
+NO graphics.
+
+STRUCTURE:
+Start immediately with a strong natural hook.
+Show the product clearly.
+Mention a real benefit of the product.
+End with a short natural call to action.
 
 IMPORTANT:
 The creator MUST speak during the video.
-
-The video must have a clear beginning, middle and ending.
-
-Most important:
-The creator MUST say a natural CTA during the FINAL seconds.
-
-Never end the video before the CTA is spoken.
-
-The CTA must invite the viewer to check the product
-in the TikTok Shop shopping cart.
-
-Do not invent features or make unrealistic claims.
-Keep the product visible during the selling moments.
-Keep the video dynamic and natural.
+The CTA MUST be spoken during the final 2 seconds.
+Do not end the video before the CTA is spoken.
 `;
 
+    let styleInstructions = "";
+
     if (style === "UGC Vendedor") {
-      return `
-${base}
+      styleInstructions = `
+STYLE:
+A real Brazilian female creator presenting the product to her followers.
+Selfie smartphone camera.
+She holds and demonstrates the product naturally.
+She speaks directly to the camera.
 
-STYLE: UGC SELLER.
+DIALOGUE:
+Start with:
+"Olha isso aqui!"
 
-A Brazilian creator talks directly to the smartphone camera.
+Then naturally talk about the product and one useful benefit.
 
-TIMING:
-
-0-${Math.min(3, seconds)} seconds:
-Strong curiosity hook and immediately show the product.
-
-Middle:
-Quickly explain why the product caught their attention
-and mention one real useful benefit.
-
-FINAL 2-3 seconds:
-The creator MUST clearly speak this CTA naturally:
-
-"Se você gostou, dá uma olhadinha no carrinho."
-
-The CTA is mandatory.
-The video MUST finish after the CTA.
-`.trim();
+At the end she MUST say:
+"Gostou? Olha o carrinho."
+`;
     }
 
     if (style === "POV Vendedor") {
-      return `
-${base}
+      styleInstructions = `
+STYLE:
+POV smartphone video.
+The viewer feels like they are personally seeing the product.
+Real human hands interact naturally with the product.
+The creator speaks naturally while demonstrating it.
 
-STYLE: POV SELLER.
+DIALOGUE:
+Start with:
+"Olha o que eu achei!"
 
-The camera feels like a real person holding a smartphone.
-Show natural hands interacting with the product.
+Then naturally show the product and mention one useful benefit.
 
-TIMING:
-
-Beginning:
-Start immediately with curiosity and reveal the product.
-
-Middle:
-Show the product being handled or used naturally.
-Mention one useful benefit.
-
-FINAL 2-3 seconds:
-The creator MUST clearly speak:
-
-"Se você gostou, dá uma olhadinha no carrinho."
-
-The CTA is mandatory.
-The video MUST finish after the CTA.
-`.trim();
+At the end she MUST say:
+"Se curtiu, confere o carrinho."
+`;
     }
 
-    return `
-${base}
+    if (style === "Showcase") {
+      styleInstructions = `
+STYLE:
+Realistic product showcase.
+The product is clearly visible.
+Natural camera movement.
+Hands interact naturally with the product.
+The presentation must still feel like a real creator recommendation, not a commercial.
 
-STYLE: HUMAN PRODUCT SHOWCASE.
+DIALOGUE:
+Start with:
+"Olha isso!"
 
-The product is the main visual focus.
-Use realistic smartphone close-ups and natural movement.
+Then briefly present the product and one useful benefit.
 
-Beginning:
-Immediately reveal the product.
+At the end she MUST say:
+"Gostou? Tá no carrinho."
+`;
+    }
 
-Middle:
-Show important details and one real benefit.
-A human creator speaks naturally in Brazilian Portuguese.
+    const durationInstructions =
+      seconds === 4
+        ? `
+DURATION:
+4 seconds.
+Keep the dialogue extremely short.
+Hook, product benefit and CTA must fit naturally.
+`
+        : seconds === 8
+        ? `
+DURATION:
+8 seconds.
 
-FINAL 2-3 seconds:
-The creator MUST clearly speak:
+TIMING:
+0-2 seconds: strong hook.
+2-6 seconds: product and benefit.
+6-8 seconds: spoken CTA.
 
-"Se você gostou, dá uma olhadinha no carrinho."
+The CTA must happen before the video ends.
+`
+        : `
+DURATION:
+12 seconds.
 
-The CTA is mandatory.
-The video MUST finish after the CTA.
-`.trim();
+TIMING:
+0-3 seconds: strong hook.
+3-7 seconds: show product and problem/desire.
+7-10 seconds: demonstrate benefit.
+10-12 seconds: spoken CTA.
+
+The CTA must happen before the video ends.
+`;
+
+    return base + styleInstructions + durationInstructions;
   }
-
-  // ==========================================
-  // GERAR VÍDEO
-  // ==========================================
 
   async function generateVideo() {
     if (!image) {
-      setError("Primeiro envie a foto do produto.");
+      setError("Envie uma foto do produto primeiro.");
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setVideoUrl(null);
-    setProgress(0);
-
     try {
-      const generatedPrompt = createSellerPrompt();
+      setLoading(true);
+      setError("");
+      setVideoUrl("");
+      setStatus("Enviando produto para gerar o vídeo...");
 
-      setPrompt(generatedPrompt);
-
-      setStatus("Preparando seu vídeo vendedor...");
-
-      const seconds = Number(
-        duration.replace(" segundos", "")
-      );
+      const prompt = createPrompt();
 
       const response = await fetch("/api/video", {
         method: "POST",
@@ -275,7 +251,7 @@ The video MUST finish after the CTA.
         },
         body: JSON.stringify({
           image,
-          prompt: generatedPrompt,
+          prompt,
           seconds,
         }),
       });
@@ -284,92 +260,83 @@ The video MUST finish after the CTA.
 
       if (!response.ok) {
         throw new Error(
-          data?.error ||
-            "Não foi possível iniciar o vídeo."
-        );
-      }
-
-      if (!data.id) {
-        throw new Error(
-          "A API não retornou o ID do vídeo."
+          data?.error || "Erro ao iniciar geração do vídeo."
         );
       }
 
       const videoId = data.id;
 
-      setStatus("Vídeo enviado para geração...");
-      setProgress(data.progress ?? 0);
+      if (!videoId) {
+        throw new Error("A API não retornou o ID do vídeo.");
+      }
 
-      let finished = false;
+      setStatus("Vídeo sendo criado...");
+
       let attempts = 0;
+      const maxAttempts = 120;
 
-      while (!finished && attempts < 120) {
+      while (attempts < maxAttempts) {
         attempts++;
 
         await new Promise((resolve) =>
           setTimeout(resolve, 5000)
         );
 
-        const statusResponse = await fetch(
-          `/api/video?id=${encodeURIComponent(videoId)}`,
-          {
-            method: "GET",
-            cache: "no-store",
-          }
+        const pollResponse = await fetch(
+          `/api/video?id=${encodeURIComponent(videoId)}`
         );
 
-        const statusData =
-          await statusResponse.json();
+        const pollData = await pollResponse.json();
 
-        if (!statusResponse.ok) {
+        if (!pollResponse.ok) {
           throw new Error(
-            statusData?.error ||
-              "Erro ao consultar o vídeo."
+            pollData?.error || "Erro ao consultar o vídeo."
           );
         }
 
-        const currentProgress =
-          statusData.progress ?? 0;
+        if (pollData.status === "completed") {
+          if (pollData.url) {
+            setVideoUrl(pollData.url);
+            setStatus("Vídeo pronto! 🎉");
+            setLoading(false);
+            return;
+          }
 
-        setProgress(currentProgress);
+          if (pollData.video_url) {
+            setVideoUrl(pollData.video_url);
+            setStatus("Vídeo pronto! 🎉");
+            setLoading(false);
+            return;
+          }
 
-        if (statusData.status === "completed") {
-          finished = true;
-
-          setStatus("Vídeo pronto!");
-
-          setProgress(100);
-
-          setVideoUrl(
-            `/api/video?id=${encodeURIComponent(
-              videoId
-            )}&download=1`
+          throw new Error(
+            "O vídeo foi concluído, mas a URL não foi encontrada."
           );
-
-          break;
         }
 
         if (
-          statusData.status === "failed" ||
-          statusData.status === "cancelled"
+          pollData.status === "failed" ||
+          pollData.status === "cancelled"
         ) {
           throw new Error(
-            statusData?.error ||
-              "A geração do vídeo não foi concluída."
+            pollData.error || "A geração do vídeo falhou."
           );
         }
 
         setStatus(
-          `Criando vídeo vendedor... ${currentProgress}%`
+          `Gerando vídeo... ${Math.min(
+            attempts,
+            99
+          )}%`
         );
       }
 
-      if (!finished) {
-        throw new Error(
-          "A geração demorou mais que o esperado. Tente novamente."
-        );
-      }
+      throw new Error(
+        "A geração demorou mais que o esperado. Tente novamente."
+      );
     } catch (err) {
+      console.error(err);
+
       setError(
         err instanceof Error
           ? err.message
@@ -382,38 +349,35 @@ The video MUST finish after the CTA.
     }
   }
 
-  // ==========================================
-  // INTERFACE
-  // ==========================================
-
   return (
     <main
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(180deg,#08080c,#111118)",
-        color: "#fff",
-        padding: "32px 16px 60px",
-        fontFamily: "Arial, sans-serif",
+          "linear-gradient(135deg, #111827, #1f2937)",
+        color: "#ffffff",
+        padding: "30px 16px",
+        fontFamily:
+          "Arial, Helvetica, sans-serif",
       }}
     >
       <div
         style={{
-          maxWidth: 720,
+          maxWidth: "760px",
           margin: "0 auto",
         }}
       >
         <header
           style={{
             textAlign: "center",
-            marginBottom: 30,
+            marginBottom: "30px",
           }}
         >
           <h1
             style={{
-              fontSize: 36,
-              fontWeight: 900,
-              margin: 0,
+              fontSize: "34px",
+              marginBottom: "10px",
+              fontWeight: 800,
             }}
           >
             ViralShop AI
@@ -421,106 +385,85 @@ The video MUST finish after the CTA.
 
           <p
             style={{
-              color: "#aaa",
-              fontSize: 16,
-              marginTop: 8,
+              fontSize: "17px",
+              opacity: 0.85,
             }}
           >
-            Transforme a foto do produto em um vídeo
-            vendedor realista
+            Crie vídeos realistas para TikTok Shop
           </p>
         </header>
 
-        {/* FOTO */}
-
         <section
           style={{
-            background: "#17171e",
-            borderRadius: 18,
-            padding: 22,
-            marginBottom: 18,
+            background: "#ffffff",
+            color: "#111827",
+            borderRadius: "20px",
+            padding: "24px",
+            boxShadow:
+              "0 20px 50px rgba(0,0,0,0.25)",
           }}
         >
           <h2
             style={{
-              fontSize: 19,
-              marginTop: 0,
+              fontSize: "21px",
+              marginBottom: "10px",
             }}
           >
-            1. Foto do produto
+            1. Envie a foto do produto
           </h2>
 
-          <label
+          <p
             style={{
-              display: "block",
-              border: "2px dashed #444",
-              borderRadius: 16,
-              padding: 20,
-              textAlign: "center",
-              cursor: "pointer",
+              color: "#6b7280",
+              marginBottom: "16px",
             }}
           >
-            {image ? (
+            PNG, JPG ou WEBP
+          </p>
+
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={handleImage}
+            style={{
+              width: "100%",
+              padding: "14px",
+              border:
+                "2px dashed #d1d5db",
+              borderRadius: "12px",
+              cursor: "pointer",
+              background: "#f9fafb",
+            }}
+          />
+
+          {image && (
+            <div
+              style={{
+                marginTop: "20px",
+                textAlign: "center",
+              }}
+            >
               <img
                 src={image}
                 alt="Produto"
                 style={{
-                  width: "100%",
-                  maxWidth: 360,
-                  aspectRatio: "9 / 16",
+                  width: "180px",
+                  height: "320px",
                   objectFit: "contain",
-                  borderRadius: 12,
+                  borderRadius: "14px",
+                  background: "#f3f4f6",
+                  border:
+                    "1px solid #e5e7eb",
                 }}
               />
-            ) : (
-              <div
-                style={{
-                  padding: "60px 10px",
-                  color: "#aaa",
-                }}
-              >
-                Clique aqui para enviar a foto do produto
-              </div>
-            )}
-
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp"
-              onChange={handleImage}
-              style={{
-                display: "none",
-              }}
-            />
-          </label>
-
-          {image && (
-            <p
-              style={{
-                color: "#777",
-                fontSize: 12,
-                textAlign: "center",
-                marginBottom: 0,
-              }}
-            >
-              Foto preparada automaticamente em 9:16
-            </p>
+            </div>
           )}
-        </section>
 
-        {/* ESTILO */}
-
-        <section
-          style={{
-            background: "#17171e",
-            borderRadius: 18,
-            padding: 22,
-            marginBottom: 18,
-          }}
-        >
           <h2
             style={{
-              fontSize: 19,
-              marginTop: 0,
+              fontSize: "21px",
+              marginTop: "30px",
+              marginBottom: "14px",
             }}
           >
             2. Estilo do vídeo
@@ -530,36 +473,26 @@ The video MUST finish after the CTA.
             style={{
               display: "grid",
               gridTemplateColumns:
-                "repeat(3,1fr)",
-              gap: 10,
+                "repeat(3, 1fr)",
+              gap: "10px",
             }}
           >
-            {(
-              [
-                "UGC Vendedor",
-                "POV Vendedor",
-                "Showcase",
-              ] as VideoStyle[]
-            ).map((item) => (
+            {styles.map((item) => (
               <button
                 key={item}
-                type="button"
                 onClick={() => setStyle(item)}
                 style={{
-                  padding: "15px 8px",
-                  borderRadius: 12,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
                   border:
                     style === item
-                      ? "2px solid #fff"
-                      : "1px solid #444",
+                      ? "3px solid #111827"
+                      : "1px solid #d1d5db",
                   background:
                     style === item
-                      ? "#fff"
-                      : "#22222a",
-                  color:
-                    style === item
-                      ? "#000"
-                      : "#fff",
+                      ? "#f3f4f6"
+                      : "#ffffff",
+                  color: "#111827",
                   fontWeight: 700,
                   cursor: "pointer",
                 }}
@@ -568,22 +501,12 @@ The video MUST finish after the CTA.
               </button>
             ))}
           </div>
-        </section>
 
-        {/* DURAÇÃO */}
-
-        <section
-          style={{
-            background: "#17171e",
-            borderRadius: 18,
-            padding: 22,
-            marginBottom: 18,
-          }}
-        >
           <h2
             style={{
-              fontSize: 19,
-              marginTop: 0,
+              fontSize: "21px",
+              marginTop: "30px",
+              marginBottom: "14px",
             }}
           >
             3. Duração
@@ -593,235 +516,156 @@ The video MUST finish after the CTA.
             style={{
               display: "grid",
               gridTemplateColumns:
-                "repeat(3,1fr)",
-              gap: 10,
+                "repeat(3, 1fr)",
+              gap: "10px",
             }}
           >
-            {(
-              [
-                "4 segundos",
-                "8 segundos",
-                "12 segundos",
-              ] as Duration[]
-            ).map((item) => (
+            {durations.map((item) => (
               <button
                 key={item}
-                type="button"
-                onClick={() => setDuration(item)}
+                onClick={() => setSeconds(item)}
                 style={{
-                  padding: 15,
-                  borderRadius: 12,
+                  padding: "14px",
+                  borderRadius: "12px",
                   border:
-                    duration === item
-                      ? "2px solid #fff"
-                      : "1px solid #444",
+                    seconds === item
+                      ? "3px solid #111827"
+                      : "1px solid #d1d5db",
                   background:
-                    duration === item
-                      ? "#fff"
-                      : "#22222a",
-                  color:
-                    duration === item
-                      ? "#000"
-                      : "#fff",
+                    seconds === item
+                      ? "#f3f4f6"
+                      : "#ffffff",
+                  color: "#111827",
                   fontWeight: 700,
                   cursor: "pointer",
                 }}
               >
-                {item}
+                {item} segundos
               </button>
             ))}
           </div>
-        </section>
 
-        {/* BOTÃO */}
-
-        <button
-          type="button"
-          onClick={generateVideo}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "19px 20px",
-            border: "none",
-            borderRadius: 15,
-            background: loading ? "#555" : "#fff",
-            color: loading ? "#ccc" : "#000",
-            fontSize: 18,
-            fontWeight: 900,
-            cursor: loading
-              ? "not-allowed"
-              : "pointer",
-            marginBottom: 18,
-          }}
-        >
-          {loading
-            ? "CRIANDO VÍDEO..."
-            : "GERAR VÍDEO VENDEDOR"}
-        </button>
-
-        {/* STATUS */}
-
-        {loading && (
-          <section
+          <button
+            onClick={generateVideo}
+            disabled={loading || !image}
             style={{
-              background: "#17171e",
-              borderRadius: 16,
-              padding: 20,
-              marginBottom: 18,
+              width: "100%",
+              marginTop: "30px",
+              padding: "18px",
+              border: "none",
+              borderRadius: "14px",
+              background:
+                loading || !image
+                  ? "#9ca3af"
+                  : "#111827",
+              color: "#ffffff",
+              fontSize: "18px",
+              fontWeight: 800,
+              cursor:
+                loading || !image
+                  ? "not-allowed"
+                  : "pointer",
             }}
           >
-            <p
+            {loading
+              ? "GERANDO VÍDEO..."
+              : "GERAR VÍDEO"}
+          </button>
+
+          {status && (
+            <div
               style={{
-                marginTop: 0,
-                color: "#ddd",
+                marginTop: "20px",
+                padding: "14px",
+                borderRadius: "12px",
+                background: "#f3f4f6",
+                color: "#111827",
+                textAlign: "center",
+                fontWeight: 700,
               }}
             >
               {status}
-            </p>
+            </div>
+          )}
 
+          {error && (
             <div
               style={{
-                height: 10,
-                background: "#292932",
-                borderRadius: 20,
-                overflow: "hidden",
+                marginTop: "20px",
+                padding: "14px",
+                borderRadius: "12px",
+                background: "#fee2e2",
+                color: "#991b1b",
+                fontWeight: 700,
               }}
             >
-              <div
+              {error}
+            </div>
+          )}
+
+          {videoUrl && (
+            <div
+              style={{
+                marginTop: "30px",
+              }}
+            >
+              <h2
                 style={{
-                  width: `${progress}%`,
-                  height: "100%",
-                  background: "#fff",
-                  transition:
-                    "width .4s ease",
+                  fontSize: "22px",
+                  marginBottom: "15px",
+                }}
+              >
+                🎉 Seu vídeo está pronto!
+              </h2>
+
+              <video
+                src={videoUrl}
+                controls
+                playsInline
+                style={{
+                  width: "100%",
+                  maxHeight: "700px",
+                  objectFit: "contain",
+                  borderRadius: "16px",
+                  background: "#000000",
                 }}
               />
+
+              <a
+                href={videoUrl}
+                download="viralshop-video.mp4"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "block",
+                  textAlign: "center",
+                  marginTop: "16px",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  background: "#111827",
+                  color: "#ffffff",
+                  textDecoration: "none",
+                  fontWeight: 800,
+                }}
+              >
+                BAIXAR VÍDEO
+              </a>
             </div>
+          )}
+        </section>
 
-            <p
-              style={{
-                fontSize: 13,
-                color: "#888",
-                marginBottom: 0,
-              }}
-            >
-              {progress}%
-            </p>
-          </section>
-        )}
-
-        {/* ERRO */}
-
-        {error && (
-          <section
-            style={{
-              background: "#321919",
-              border: "1px solid #6b3030",
-              borderRadius: 14,
-              padding: 16,
-              marginBottom: 18,
-              color: "#ffb5b5",
-            }}
-          >
-            {error}
-          </section>
-        )}
-
-        {/* VÍDEO */}
-
-        {videoUrl && (
-          <section
-            style={{
-              background: "#17171e",
-              borderRadius: 18,
-              padding: 20,
-              textAlign: "center",
-            }}
-          >
-            <h2
-              style={{
-                marginTop: 0,
-              }}
-            >
-              Seu vídeo está pronto!
-            </h2>
-
-            <video
-              src={videoUrl}
-              controls
-              playsInline
-              style={{
-                width: "100%",
-                maxWidth: 420,
-                aspectRatio: "9 / 16",
-                objectFit: "contain",
-                borderRadius: 14,
-                background: "#000",
-              }}
-            />
-
-            <a
-              href={videoUrl}
-              download="viralshop-video.mp4"
-              style={{
-                display: "block",
-                marginTop: 18,
-                padding: "15px 20px",
-                borderRadius: 12,
-                background: "#fff",
-                color: "#000",
-                textDecoration: "none",
-                fontWeight: 900,
-              }}
-            >
-              BAIXAR VÍDEO
-            </a>
-          </section>
-        )}
-
-        {/* PROMPT */}
-
-        {prompt && !loading && (
-          <details
-            style={{
-              marginTop: 20,
-              color: "#777",
-            }}
-          >
-            <summary
-              style={{
-                cursor: "pointer",
-              }}
-            >
-              Ver prompt utilizado
-            </summary>
-
-            <pre
-              style={{
-                whiteSpace: "pre-wrap",
-                fontSize: 12,
-                lineHeight: 1.5,
-                marginTop: 12,
-              }}
-            >
-              {prompt}
-            </pre>
-          </details>
-        )}
-
-        <p
+        <footer
           style={{
             textAlign: "center",
-            color: "#555",
-            fontSize: 12,
-            marginTop: 30,
+            marginTop: "25px",
+            opacity: 0.7,
+            fontSize: "14px",
           }}
         >
-          ViralShop AI · Criado para acelerar sua produção
-          de TikTok Shop
-        </p>
+          ViralShop AI · Criado para acelerar
+          sua produção de TikTok Shop
+        </footer>
       </div>
     </main>
   );
 }
-```
