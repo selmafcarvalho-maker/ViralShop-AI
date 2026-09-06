@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { ChangeEvent, useState } from "react";
@@ -7,17 +8,13 @@ type Duration = "4 segundos" | "8 segundos" | "12 segundos";
 
 export default function Home() {
   const [image, setImage] = useState<string | null>(null);
-  const [style, setStyle] =
-    useState<VideoStyle>("UGC Vendedor");
-
-  const [duration, setDuration] =
-    useState<Duration>("8 segundos");
+  const [style, setStyle] = useState<VideoStyle>("UGC Vendedor");
+  const [duration, setDuration] = useState<Duration>("8 segundos");
 
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] =
-    useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,9 +23,7 @@ export default function Home() {
   // PREPARAR FOTO EM 9:16
   // ==========================================
 
-  function handleImage(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
+  function handleImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -41,9 +36,7 @@ export default function Home() {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      setError(
-        "Use uma imagem PNG, JPG, JPEG ou WEBP."
-      );
+      setError("Use uma imagem PNG, JPG, JPEG ou WEBP.");
       return;
     }
 
@@ -58,47 +51,30 @@ export default function Home() {
         const width = 720;
         const height = 1280;
 
-        const canvas =
-          document.createElement("canvas");
-
+        const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
 
         const ctx = canvas.getContext("2d");
 
         if (!ctx) {
-          setError(
-            "Não foi possível preparar a imagem."
-          );
+          setError("Não foi possível preparar a imagem.");
           return;
         }
 
-        // Fundo neutro
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(
-          0,
-          0,
-          width,
-          height
-        );
+        ctx.fillRect(0, 0, width, height);
 
-        // Mantém produto inteiro
         const scale = Math.min(
           width / img.width,
           height / img.height
         );
 
-        const newWidth =
-          img.width * scale;
+        const newWidth = img.width * scale;
+        const newHeight = img.height * scale;
 
-        const newHeight =
-          img.height * scale;
-
-        const x =
-          (width - newWidth) / 2;
-
-        const y =
-          (height - newHeight) / 2;
+        const x = (width - newWidth) / 2;
+        const y = (height - newHeight) / 2;
 
         ctx.drawImage(
           img,
@@ -108,11 +84,10 @@ export default function Home() {
           newHeight
         );
 
-        const finalImage =
-          canvas.toDataURL(
-            "image/png",
-            1
-          );
+        const finalImage = canvas.toDataURL(
+          "image/png",
+          1
+        );
 
         setImage(finalImage);
         setVideoUrl(null);
@@ -121,185 +96,96 @@ export default function Home() {
       };
 
       img.onerror = () => {
-        setError(
-          "Não foi possível carregar a imagem."
-        );
+        setError("Não foi possível carregar a imagem.");
       };
 
-      img.src =
-        reader.result as string;
+      img.src = reader.result as string;
     };
 
     reader.onerror = () => {
-      setError(
-        "Não foi possível ler a imagem."
-      );
+      setError("Não foi possível ler a imagem.");
     };
 
     reader.readAsDataURL(file);
   }
 
   // ==========================================
-  // GERADOR DE PROMPT VENDEDOR
+  // PROMPT CURTO E VENDEDOR
   // ==========================================
 
   function createSellerPrompt() {
+    const seconds = Number(
+      duration.replace(" segundos", "")
+    );
+
     const base = `
-Create an ultra-realistic Brazilian TikTok Shop
-product selling video.
+Create an ultra-realistic Brazilian TikTok Shop selling video.
+
+Use the reference image as the absolute truth.
+The product must remain EXACTLY identical to the image.
+Do not change its color, shape, size, texture, material,
+packaging, logo, labels or details.
+
+Vertical 9:16.
+Real smartphone UGC style.
+Natural Brazilian environment.
+Natural human movements.
+Natural realistic hands.
+Authentic facial expressions.
+Realistic lighting.
+
+Brazilian Portuguese spoken dialogue only.
+Natural human voice.
+No robotic voice.
+No narrator.
+No text on screen.
+No subtitles.
+No captions.
+No emojis.
+No graphics.
 
 IMPORTANT:
-The reference image is the absolute source of truth
-for the product.
+The creator MUST speak during the video.
 
-The product MUST remain visually identical to the
-reference image.
+The video must have a clear beginning, middle and ending.
 
-Never change:
-- product color
-- product shape
-- product size
-- product proportions
-- product texture
-- material
-- packaging
-- labels
-- logo
-- printed details
-- buttons
-- accessories
-- design
+Most important:
+The creator MUST say a natural CTA during the FINAL seconds.
 
-Do not invent product features.
+Never end the video before the CTA is spoken.
 
-VERTICAL FORMAT:
-9:16.
-
-The video must look like a real Brazilian creator
-recorded it with a smartphone.
-
-Natural handheld camera movement.
-Natural human gestures.
-Natural facial expressions.
-Realistic skin.
-Realistic hands.
-Natural lighting.
-Real Brazilian everyday environment.
-
-The result must NOT look like a traditional commercial.
-
-The creator is selling the product naturally,
-as if recommending something they genuinely found
-and liked.
-
-LANGUAGE:
-Brazilian Portuguese only.
-
-VOICE:
-Natural Brazilian Portuguese human voice.
-Conversational tone.
-No robotic voice.
-No exaggerated announcer voice.
-
-The creator must speak naturally and quickly,
-without sounding like they are reading a script.
-
-SELLING STRUCTURE:
-
-FIRST MOMENTS:
-Start immediately with a strong attention-grabbing
-spoken hook.
-
-The first sentence must create curiosity about
-the product.
-
-Then quickly show the product.
-
-PROBLEM / DESIRE:
-Mention a relatable problem, desire, or situation
-that the product can realistically help with.
-
-PRODUCT:
-Present the product naturally.
-
-BENEFIT:
-Explain the most useful real benefit visible or
-reasonably supported by the product.
-
-DEMONSTRATION:
-Show the product being handled or used naturally
-when appropriate.
-
-The product must remain clearly visible.
-
-ENDING:
-Finish with a natural Brazilian Portuguese call
-to action inviting the viewer to check the product
+The CTA must invite the viewer to check the product
 in the TikTok Shop shopping cart.
 
-The CTA must sound conversational, not aggressive.
-
-IMPORTANT VISUAL RULES:
-
-No text on screen.
-No captions.
-No subtitles.
-No emojis.
-No banners.
-No floating graphics.
-No artificial stickers.
-No extra hands.
-No duplicated products.
-No distorted fingers.
-No product deformation.
-No product replacement.
-No changing the product.
-
-The product must remain the same from beginning
-to end.
-
-The video should feel spontaneous, authentic,
-dynamic and made for TikTok Shop.
-
-Avoid long pauses.
-
-Keep the product visible during the important
-selling moments.
+Do not invent features or make unrealistic claims.
+Keep the product visible during the selling moments.
+Keep the video dynamic and natural.
 `;
 
     if (style === "UGC Vendedor") {
       return `
 ${base}
 
-STYLE:
-UGC Brazilian female or male creator.
+STYLE: UGC SELLER.
 
-The creator is facing the smartphone camera
-and talking directly to the viewer.
+A Brazilian creator talks directly to the smartphone camera.
 
-Use close and medium shots naturally.
+TIMING:
 
-The creator should occasionally bring the product
-closer to the camera to show details.
+0-${Math.min(3, seconds)} seconds:
+Strong curiosity hook and immediately show the product.
 
-The performance must feel spontaneous.
+Middle:
+Quickly explain why the product caught their attention
+and mention one real useful benefit.
 
-Suggested spoken flow:
+FINAL 2-3 seconds:
+The creator MUST clearly speak this CTA naturally:
 
-HOOK:
-"Olha isso aqui porque eu não esperava..."
-
-Then naturally explain why the product caught
-their attention.
-
-Show the product.
-
-Explain a real benefit.
-
-Demonstrate or interact with it.
-
-Finish naturally with:
 "Se você gostou, dá uma olhadinha no carrinho."
+
+The CTA is mandatory.
+The video MUST finish after the CTA.
 `.trim();
     }
 
@@ -307,61 +193,52 @@ Finish naturally with:
       return `
 ${base}
 
-STYLE:
-POV product discovery and recommendation.
+STYLE: POV SELLER.
 
-The camera behaves like a real person holding
-a smartphone.
+The camera feels like a real person holding a smartphone.
+Show natural hands interacting with the product.
 
-Show the hands naturally interacting with
-the product.
+TIMING:
 
-Use realistic handheld movement.
+Beginning:
+Start immediately with curiosity and reveal the product.
 
-The creator speaks naturally in Brazilian Portuguese
-while showing the product.
+Middle:
+Show the product being handled or used naturally.
+Mention one useful benefit.
 
-The viewer should feel like they discovered
-a useful product through a real person's video.
+FINAL 2-3 seconds:
+The creator MUST clearly speak:
 
-Start immediately with curiosity.
+"Se você gostou, dá uma olhadinha no carrinho."
 
-Example emotional direction:
-
-"Você precisa ver isso aqui..."
-
-Then reveal and demonstrate the product.
-
-Finish with a natural invitation to check the item
-in the TikTok Shop shopping cart.
+The CTA is mandatory.
+The video MUST finish after the CTA.
 `.trim();
     }
 
     return `
 ${base}
 
-STYLE:
-PRODUCT SHOWCASE WITH HUMAN SELLER.
+STYLE: HUMAN PRODUCT SHOWCASE.
 
-The product is the visual protagonist.
+The product is the main visual focus.
+Use realistic smartphone close-ups and natural movement.
 
-Use cinematic but realistic smartphone movements.
+Beginning:
+Immediately reveal the product.
 
-Show close-up details.
+Middle:
+Show important details and one real benefit.
+A human creator speaks naturally in Brazilian Portuguese.
 
-Slowly reveal the product.
+FINAL 2-3 seconds:
+The creator MUST clearly speak:
 
-Use realistic human interaction.
+"Se você gostou, dá uma olhadinha no carrinho."
 
-The creator may speak briefly in Brazilian Portuguese.
-
-Avoid traditional advertising aesthetics.
-
-Make the video feel like authentic TikTok content
-created by a person who wants to recommend the item.
-
-End with a natural spoken CTA inviting the viewer
-to check the product in the TikTok Shop cart.
+The CTA is mandatory.
+The video MUST finish after the CTA.
 `.trim();
   }
 
@@ -371,9 +248,7 @@ to check the product in the TikTok Shop cart.
 
   async function generateVideo() {
     if (!image) {
-      setError(
-        "Primeiro envie a foto do produto."
-      );
+      setError("Primeiro envie a foto do produto.");
       return;
     }
 
@@ -383,41 +258,29 @@ to check the product in the TikTok Shop cart.
     setProgress(0);
 
     try {
-      const generatedPrompt =
-        createSellerPrompt();
+      const generatedPrompt = createSellerPrompt();
 
       setPrompt(generatedPrompt);
 
-      setStatus(
-        "Preparando seu vídeo vendedor..."
-      );
+      setStatus("Preparando seu vídeo vendedor...");
 
       const seconds = Number(
-        duration.replace(
-          " segundos",
-          ""
-        )
+        duration.replace(" segundos", "")
       );
 
-      const response = await fetch(
-        "/api/video",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            image,
-            prompt:
-              generatedPrompt,
-            seconds,
-          }),
-        }
-      );
+      const response = await fetch("/api/video", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image,
+          prompt: generatedPrompt,
+          seconds,
+        }),
+      });
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -434,41 +297,26 @@ to check the product in the TikTok Shop cart.
 
       const videoId = data.id;
 
-      setStatus(
-        "Vídeo enviado para geração..."
-      );
-
-      setProgress(
-        data.progress ?? 0
-      );
+      setStatus("Vídeo enviado para geração...");
+      setProgress(data.progress ?? 0);
 
       let finished = false;
       let attempts = 0;
 
-      while (
-        !finished &&
-        attempts < 120
-      ) {
+      while (!finished && attempts < 120) {
         attempts++;
 
-        await new Promise(
-          (resolve) =>
-            setTimeout(
-              resolve,
-              5000
-            )
+        await new Promise((resolve) =>
+          setTimeout(resolve, 5000)
         );
 
-        const statusResponse =
-          await fetch(
-            `/api/video?id=${encodeURIComponent(
-              videoId
-            )}`,
-            {
-              method: "GET",
-              cache: "no-store",
-            }
-          );
+        const statusResponse = await fetch(
+          `/api/video?id=${encodeURIComponent(videoId)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
 
         const statusData =
           await statusResponse.json();
@@ -483,19 +331,12 @@ to check the product in the TikTok Shop cart.
         const currentProgress =
           statusData.progress ?? 0;
 
-        setProgress(
-          currentProgress
-        );
+        setProgress(currentProgress);
 
-        if (
-          statusData.status ===
-          "completed"
-        ) {
+        if (statusData.status === "completed") {
           finished = true;
 
-          setStatus(
-            "Vídeo pronto! 🔥"
-          );
+          setStatus("Vídeo pronto!");
 
           setProgress(100);
 
@@ -509,10 +350,8 @@ to check the product in the TikTok Shop cart.
         }
 
         if (
-          statusData.status ===
-            "failed" ||
-          statusData.status ===
-            "cancelled"
+          statusData.status === "failed" ||
+          statusData.status === "cancelled"
         ) {
           throw new Error(
             statusData?.error ||
@@ -554,10 +393,8 @@ to check the product in the TikTok Shop cart.
         background:
           "linear-gradient(180deg,#08080c,#111118)",
         color: "#fff",
-        padding:
-          "32px 16px 60px",
-        fontFamily:
-          "Arial, sans-serif",
+        padding: "32px 16px 60px",
+        fontFamily: "Arial, sans-serif",
       }}
     >
       <div
@@ -589,8 +426,8 @@ to check the product in the TikTok Shop cart.
               marginTop: 8,
             }}
           >
-            Transforme a foto do produto
-            em um vídeo vendedor realista
+            Transforme a foto do produto em um vídeo
+            vendedor realista
           </p>
         </header>
 
@@ -616,8 +453,7 @@ to check the product in the TikTok Shop cart.
           <label
             style={{
               display: "block",
-              border:
-                "2px dashed #444",
+              border: "2px dashed #444",
               borderRadius: 16,
               padding: 20,
               textAlign: "center",
@@ -631,32 +467,26 @@ to check the product in the TikTok Shop cart.
                 style={{
                   width: "100%",
                   maxWidth: 360,
-                  aspectRatio:
-                    "9 / 16",
-                  objectFit:
-                    "contain",
+                  aspectRatio: "9 / 16",
+                  objectFit: "contain",
                   borderRadius: 12,
                 }}
               />
             ) : (
               <div
                 style={{
-                  padding:
-                    "60px 10px",
+                  padding: "60px 10px",
                   color: "#aaa",
                 }}
               >
-                Clique aqui para
-                enviar a foto do produto
+                Clique aqui para enviar a foto do produto
               </div>
             )}
 
             <input
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"
-              onChange={
-                handleImage
-              }
+              onChange={handleImage}
               style={{
                 display: "none",
               }}
@@ -668,14 +498,11 @@ to check the product in the TikTok Shop cart.
               style={{
                 color: "#777",
                 fontSize: 12,
-                textAlign:
-                  "center",
+                textAlign: "center",
                 marginBottom: 0,
               }}
             >
-              Foto preparada
-              automaticamente em
-              9:16
+              Foto preparada automaticamente em 9:16
             </p>
           )}
         </section>
@@ -717,12 +544,9 @@ to check the product in the TikTok Shop cart.
               <button
                 key={item}
                 type="button"
-                onClick={() =>
-                  setStyle(item)
-                }
+                onClick={() => setStyle(item)}
                 style={{
-                  padding:
-                    "15px 8px",
+                  padding: "15px 8px",
                   borderRadius: 12,
                   border:
                     style === item
@@ -737,8 +561,7 @@ to check the product in the TikTok Shop cart.
                       ? "#000"
                       : "#fff",
                   fontWeight: 700,
-                  cursor:
-                    "pointer",
+                  cursor: "pointer",
                 }}
               >
                 {item}
@@ -784,9 +607,7 @@ to check the product in the TikTok Shop cart.
               <button
                 key={item}
                 type="button"
-                onClick={() =>
-                  setDuration(item)
-                }
+                onClick={() => setDuration(item)}
                 style={{
                   padding: 15,
                   borderRadius: 12,
@@ -803,8 +624,7 @@ to check the product in the TikTok Shop cart.
                       ? "#000"
                       : "#fff",
                   fontWeight: 700,
-                  cursor:
-                    "pointer",
+                  cursor: "pointer",
                 }}
               >
                 {item}
@@ -817,30 +637,20 @@ to check the product in the TikTok Shop cart.
 
         <button
           type="button"
-          onClick={
-            generateVideo
-          }
+          onClick={generateVideo}
           disabled={loading}
           style={{
             width: "100%",
-            padding:
-              "19px 20px",
+            padding: "19px 20px",
             border: "none",
             borderRadius: 15,
-            background:
-              loading
-                ? "#555"
-                : "#fff",
-            color:
-              loading
-                ? "#ccc"
-                : "#000",
+            background: loading ? "#555" : "#fff",
+            color: loading ? "#ccc" : "#000",
             fontSize: 18,
             fontWeight: 900,
-            cursor:
-              loading
-                ? "not-allowed"
-                : "pointer",
+            cursor: loading
+              ? "not-allowed"
+              : "pointer",
             marginBottom: 18,
           }}
         >
@@ -854,8 +664,7 @@ to check the product in the TikTok Shop cart.
         {loading && (
           <section
             style={{
-              background:
-                "#17171e",
+              background: "#17171e",
               borderRadius: 16,
               padding: 20,
               marginBottom: 18,
@@ -873,19 +682,16 @@ to check the product in the TikTok Shop cart.
             <div
               style={{
                 height: 10,
-                background:
-                  "#292932",
+                background: "#292932",
                 borderRadius: 20,
-                overflow:
-                  "hidden",
+                overflow: "hidden",
               }}
             >
               <div
                 style={{
                   width: `${progress}%`,
                   height: "100%",
-                  background:
-                    "#fff",
+                  background: "#fff",
                   transition:
                     "width .4s ease",
                 }}
@@ -909,10 +715,8 @@ to check the product in the TikTok Shop cart.
         {error && (
           <section
             style={{
-              background:
-                "#321919",
-              border:
-                "1px solid #6b3030",
+              background: "#321919",
+              border: "1px solid #6b3030",
               borderRadius: 14,
               padding: 16,
               marginBottom: 18,
@@ -928,12 +732,10 @@ to check the product in the TikTok Shop cart.
         {videoUrl && (
           <section
             style={{
-              background:
-                "#17171e",
+              background: "#17171e",
               borderRadius: 18,
               padding: 20,
-              textAlign:
-                "center",
+              textAlign: "center",
             }}
           >
             <h2
@@ -941,7 +743,7 @@ to check the product in the TikTok Shop cart.
                 marginTop: 0,
               }}
             >
-              Seu vídeo está pronto! 🔥
+              Seu vídeo está pronto!
             </h2>
 
             <video
@@ -951,13 +753,10 @@ to check the product in the TikTok Shop cart.
               style={{
                 width: "100%",
                 maxWidth: 420,
-                aspectRatio:
-                  "9 / 16",
-                objectFit:
-                  "contain",
+                aspectRatio: "9 / 16",
+                objectFit: "contain",
                 borderRadius: 14,
-                background:
-                  "#000",
+                background: "#000",
               }}
             />
 
@@ -965,17 +764,13 @@ to check the product in the TikTok Shop cart.
               href={videoUrl}
               download="viralshop-video.mp4"
               style={{
-                display:
-                  "block",
+                display: "block",
                 marginTop: 18,
-                padding:
-                  "15px 20px",
+                padding: "15px 20px",
                 borderRadius: 12,
-                background:
-                  "#fff",
+                background: "#fff",
                 color: "#000",
-                textDecoration:
-                  "none",
+                textDecoration: "none",
                 fontWeight: 900,
               }}
             >
@@ -984,7 +779,7 @@ to check the product in the TikTok Shop cart.
           </section>
         )}
 
-        {/* PROMPT OCULTO/INFORMATIVO */}
+        {/* PROMPT */}
 
         {prompt && !loading && (
           <details
@@ -995,8 +790,7 @@ to check the product in the TikTok Shop cart.
           >
             <summary
               style={{
-                cursor:
-                  "pointer",
+                cursor: "pointer",
               }}
             >
               Ver prompt utilizado
@@ -1004,8 +798,7 @@ to check the product in the TikTok Shop cart.
 
             <pre
               style={{
-                whiteSpace:
-                  "pre-wrap",
+                whiteSpace: "pre-wrap",
                 fontSize: 12,
                 lineHeight: 1.5,
                 marginTop: 12,
@@ -1018,18 +811,17 @@ to check the product in the TikTok Shop cart.
 
         <p
           style={{
-            textAlign:
-              "center",
+            textAlign: "center",
             color: "#555",
             fontSize: 12,
             marginTop: 30,
           }}
         >
-          ViralShop AI · Criado
-          para acelerar sua produção
+          ViralShop AI · Criado para acelerar sua produção
           de TikTok Shop
         </p>
       </div>
     </main>
   );
 }
+```
