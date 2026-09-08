@@ -3,6 +3,8 @@ import sharp from "sharp";
 
 const BASE = "https://api.openai.com/v1/videos";
 
+const ALLOWED_SECONDS = ["4", "8", "12"];
+
 export async function POST(req: NextRequest) {
   try {
     const key = process.env.OPENAI_API_KEY;
@@ -10,7 +12,8 @@ export async function POST(req: NextRequest) {
     if (!key) {
       return NextResponse.json(
         {
-          error: "OPENAI_API_KEY não configurada na Vercel.",
+          error:
+            "OPENAI_API_KEY não configurada na Vercel.",
         },
         { status: 500 }
       );
@@ -31,23 +34,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!["4", "8", "12"].includes(seconds)) {
+    if (!ALLOWED_SECONDS.includes(seconds)) {
       return NextResponse.json(
         {
-          error: "A duração deve ser 4, 8 ou 12 segundos.",
+          error:
+            "A duração escolhida não é suportada. Use 4, 8 ou 12 segundos.",
         },
         { status: 400 }
       );
     }
 
     /*
-     * A imagem chega do page.tsx como Data URL:
-     *
-     * data:image/png;base64,....
-     *
-     * Vamos transformar qualquer imagem recebida
-     * em EXATAMENTE 720x1280 antes de enviar
-     * para a API de vídeos.
+     * ==========================================
+     * VALIDAR DATA URL
+     * ==========================================
      */
 
     const match = image.match(
@@ -73,14 +73,13 @@ export async function POST(req: NextRequest) {
 
     /*
      * ==========================================
-     * CONVERSÃO OBRIGATÓRIA PARA 720x1280
+     * PREPARAR IMAGEM
      * ==========================================
      *
-     * fit: contain
+     * A API recebe uma referência vertical
+     * exatamente em 720x1280.
      *
-     * Mantém o produto inteiro dentro da imagem.
-     * Se a foto original tiver outro formato,
-     * adicionamos espaço ao redor em vez de cortar.
+     * O produto não é cortado.
      */
 
     const resizedBuffer = await sharp(originalBuffer)
@@ -96,14 +95,6 @@ export async function POST(req: NextRequest) {
       .png()
       .toBuffer();
 
-    /*
-     * A imagem final agora é:
-     *
-     * 720 x 1280
-     * PNG
-     * proporção 9:16
-     */
-
     const imageBlob = new Blob(
       [resizedBuffer],
       {
@@ -111,53 +102,72 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    /*
+     * ==========================================
+     * PROMPT PADRÃO
+     * ==========================================
+     */
+
+    const finalPrompt =
+      typeof prompt === "string" && prompt.trim()
+        ? prompt.trim()
+        : `
+Create an ultra-realistic vertical TikTok Shop product video.
+
+Use the provided image as the exact product reference.
+
+Preserve the product exactly as shown.
+
+Do not change:
+- color
+- shape
+- proportions
+- texture
+- packaging
+- logo
+- labels
+- product details
+
+Use realistic Brazilian human behavior and natural camera movement.
+
+If there is dialogue, speak naturally in Brazilian Portuguese.
+
+The video must look like authentic user-generated content recorded with a real smartphone.
+
+Do not add captions.
+Do not add subtitles.
+Do not add text overlays.
+Do not add emojis.
+Do not create extra hands.
+Do not distort the product.
+
+End with a natural invitation to check the product on TikTok Shop.
+      `.trim();
+
+    /*
+     * ==========================================
+     * FORM DATA
+     * ==========================================
+     */
+
     const form = new FormData();
 
-    /*
-     * MODELO
-     */
-
-    form.append(
-      "model",
-      "sora-2"
-    );
-
-    /*
-     * PROMPT
-     */
+    form.append("model", "sora-2");
 
     form.append(
       "prompt",
-      prompt ||
-        "Create a realistic vertical TikTok Shop product video using the reference image. Preserve the exact product appearance. Natural human interaction, realistic movement, Brazilian Portuguese speech when appropriate. End with a natural call to action inviting the viewer to tap the orange shopping cart."
+      finalPrompt
     );
-
-    /*
-     * DURAÇÃO
-     */
 
     form.append(
       "seconds",
       seconds
     );
 
-    /*
-     * TAMANHO DO VÍDEO
-     */
-
     form.append(
       "size",
       "720x1280"
     );
-
-    /*
-     * ==========================================
-     * IMAGEM DE REFERÊNCIA
-     * ==========================================
-     *
-     * Sempre enviamos o PNG convertido
-     * para exatamente 720x1280.
-     */
 
     form.append(
       "input_reference",
@@ -166,7 +176,9 @@ export async function POST(req: NextRequest) {
     );
 
     /*
-     * ENVIA PARA A API
+     * ==========================================
+     * ENVIAR PARA OPENAI
+     * ==========================================
      */
 
     const response = await fetch(
@@ -183,7 +195,9 @@ export async function POST(req: NextRequest) {
     const data = await response.json();
 
     /*
-     * TRATAMENTO DE ERRO
+     * ==========================================
+     * ERRO DA API
+     * ==========================================
      */
 
     if (!response.ok) {
@@ -204,14 +218,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!data?.id) {
+      return NextResponse.json(
+        {
+          error:
+            "A OpenAI não retornou o ID do vídeo.",
+        },
+        { status: 500 }
+      );
+    }
+
     /*
-     * RETORNA ID PARA O page.tsx
+     * ==========================================
+     * RETORNO
+     * ==========================================
      */
 
     return NextResponse.json({
       id: data.id,
       status: data.status,
       progress: data.progress ?? 0,
+      seconds: data.seconds ?? seconds,
+      size: data.size ?? "720x1280",
     });
   } catch (error) {
     console.error(
@@ -236,8 +264,13 @@ export async function POST(req: NextRequest) {
  * GET
  * ==========================================
  *
- * Consulta o andamento do vídeo
- * e permite baixar o MP4.
+ * GET /api/video?id=VIDEO_ID
+ *
+ * Consulta o status.
+ *
+ * GET /api/video?id=VIDEO_ID&download=1
+ *
+ * Faz o download/stream do MP4.
  */
 
 export async function GET(
@@ -279,7 +312,7 @@ export async function GET(
 
     /*
      * ==========================================
-     * DOWNLOAD DO MP4
+     * DOWNLOAD
      * ==========================================
      */
 
@@ -314,8 +347,7 @@ export async function GET(
             errorMessage;
         } catch {
           if (errorText) {
-            errorMessage =
-              errorText;
+            errorMessage = errorText;
           }
         }
 
@@ -340,6 +372,9 @@ export async function GET(
                 "content-type"
               ) ||
               "video/mp4",
+
+            "Content-Disposition":
+              'inline; filename="viralshop-video.mp4"',
 
             "Cache-Control":
               "no-store",
@@ -390,6 +425,8 @@ export async function GET(
       status: data.status,
       progress:
         data.progress ?? 0,
+      seconds: data.seconds ?? null,
+      size: data.size ?? null,
       error:
         data.error?.message ??
         null,
