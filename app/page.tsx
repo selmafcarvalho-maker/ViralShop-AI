@@ -1,30 +1,59 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import {
+  ChangeEvent,
+  useState,
+} from "react";
 
-type VideoStyle = "UGC Real" | "POV Real" | "Showcase";
-type Duration = "4 segundos" | "8 segundos" | "12 segundos";
+type VideoStyle =
+  | "UGC Real"
+  | "POV Real"
+  | "Showcase";
+
+type Duration =
+  | "4 segundos"
+  | "8 segundos"
+  | "12 segundos";
 
 export default function Home() {
-  const [image, setImage] = useState<string | null>(null);
-  const [style, setStyle] = useState<VideoStyle>("UGC Real");
-  const [duration, setDuration] = useState<Duration>("8 segundos");
+  const [image, setImage] =
+    useState<string | null>(null);
 
-  const [prompt, setPrompt] = useState("");
-  const [status, setStatus] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [style, setStyle] =
+    useState<VideoStyle>("UGC Real");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [duration, setDuration] =
+    useState<Duration>("8 segundos");
 
-  // ==============================
-  // PREPARAR FOTO AUTOMATICAMENTE
-  // 9:16 = 720 x 1280
-  // ==============================
+  const [prompt, setPrompt] =
+    useState("");
 
-  function handleImage(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  const [status, setStatus] =
+    useState("");
+
+  const [progress, setProgress] =
+    useState(0);
+
+  const [videoUrl, setVideoUrl] =
+    useState<string | null>(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  /*
+   * ==========================================
+   * PREPARAR FOTO
+   * ==========================================
+   */
+
+  function handleImage(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
 
     if (!file) return;
 
@@ -35,49 +64,95 @@ export default function Home() {
       "image/webp",
     ];
 
-    if (!allowedTypes.includes(file.type)) {
-      setError("Use uma imagem PNG, JPG, JPEG ou WEBP.");
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      setError(
+        "Use uma imagem PNG, JPG, JPEG ou WEBP."
+      );
       return;
     }
 
     setError("");
+    setVideoUrl(null);
+    setProgress(0);
+    setStatus("");
 
-    const reader = new FileReader();
+    const reader =
+      new FileReader();
 
     reader.onload = () => {
-      const img = new Image();
+      const img =
+        new Image();
 
       img.onload = () => {
         const targetWidth = 720;
         const targetHeight = 1280;
 
-        const canvas = document.createElement("canvas");
+        const canvas =
+          document.createElement(
+            "canvas"
+          );
 
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        canvas.width =
+          targetWidth;
 
-        const ctx = canvas.getContext("2d");
+        canvas.height =
+          targetHeight;
+
+        const ctx =
+          canvas.getContext("2d");
 
         if (!ctx) {
-          setError("Não foi possível preparar a imagem.");
+          setError(
+            "Não foi possível preparar a imagem."
+          );
           return;
         }
 
-        // Fundo neutro
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, targetWidth, targetHeight);
+        /*
+         * Fundo branco
+         */
 
-        // Mantém a foto inteira sem cortar o produto
-        const scale = Math.min(
-          targetWidth / img.width,
-          targetHeight / img.height
+        ctx.fillStyle =
+          "#ffffff";
+
+        ctx.fillRect(
+          0,
+          0,
+          targetWidth,
+          targetHeight
         );
 
-        const newWidth = img.width * scale;
-        const newHeight = img.height * scale;
+        /*
+         * Mantém o produto inteiro.
+         */
 
-        const x = (targetWidth - newWidth) / 2;
-        const y = (targetHeight - newHeight) / 2;
+        const scale =
+          Math.min(
+            targetWidth /
+              img.width,
+            targetHeight /
+              img.height
+          );
+
+        const newWidth =
+          img.width * scale;
+
+        const newHeight =
+          img.height * scale;
+
+        const x =
+          (targetWidth -
+            newWidth) /
+          2;
+
+        const y =
+          (targetHeight -
+            newHeight) /
+          2;
 
         ctx.drawImage(
           img,
@@ -87,176 +162,194 @@ export default function Home() {
           newHeight
         );
 
-        // Gera imagem final 9:16
-        const finalImage = canvas.toDataURL(
-          "image/png",
-          1.0
-        );
+        const finalImage =
+          canvas.toDataURL(
+            "image/png"
+          );
 
-        setImage(finalImage);
-        setVideoUrl(null);
-        setProgress(0);
-        setStatus("");
+        setImage(
+          finalImage
+        );
       };
 
       img.onerror = () => {
-        setError("Não foi possível carregar a imagem.");
+        setError(
+          "Não foi possível carregar a imagem."
+        );
       };
 
-      img.src = reader.result as string;
+      img.src =
+        reader.result as string;
     };
 
     reader.onerror = () => {
-      setError("Não foi possível ler a imagem.");
+      setError(
+        "Não foi possível ler a imagem."
+      );
     };
 
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(
+      file
+    );
   }
 
-  // ==============================
-  // CRIAR PROMPT
-  // ==============================
+  /*
+   * ==========================================
+   * CRIAR PROMPT
+   * ==========================================
+   */
 
   function createPrompt() {
-    if (style === "UGC Real") {
+    const common = `
+ULTRA-REALISTIC VERTICAL TIKTOK SHOP VIDEO.
+
+The provided reference image is the exact product reference.
+
+PRODUCT FIDELITY IS CRITICAL.
+
+Preserve exactly:
+- product identity
+- color
+- shape
+- proportions
+- dimensions
+- texture
+- materials
+- packaging
+- labels
+- logo
+- printed details
+
+Never redesign, replace, invent or modify the product.
+
+Format: vertical 9:16.
+
+The video must look like authentic content recorded by a real Brazilian creator using a smartphone.
+
+Natural lighting.
+Natural camera movement.
+Realistic human behavior.
+Realistic hands.
+Realistic skin.
+Natural facial expressions.
+
+All spoken dialogue must be in Brazilian Portuguese.
+
+No English speech.
+
+No subtitles.
+No captions.
+No text overlays.
+No emojis.
+No artificial graphics.
+No extra hands.
+No distorted fingers.
+No duplicated objects.
+
+Do not make unrealistic claims about the product.
+Do not invent features that are not visible or provided.
+
+End with a natural invitation to check the product on TikTok Shop.
+`;
+
+    if (
+      style === "UGC Real"
+    ) {
       return `
-Criar um vídeo UGC extremamente realista para TikTok Shop.
+${common}
 
-Formato obrigatório vertical 9:16.
+STYLE: UGC REAL.
 
-Uma pessoa brasileira apresenta o produto de forma natural, espontânea e convincente.
+A Brazilian creator is naturally presenting the product.
 
-O produto deve permanecer exatamente igual à imagem de referência.
+The camera should feel handheld and slightly imperfect, like a real TikTok video.
 
-Não alterar:
-- cor
-- formato
-- tamanho
-- textura
-- embalagem
-- logotipo
-- detalhes
-- proporções
+Start immediately with a strong conversational hook.
 
-A gravação deve parecer feita por uma pessoa real usando um celular.
+Show the product close to the camera.
 
-Movimentos naturais de câmera.
-Mãos humanas reais.
-Iluminação natural.
-Ambiente cotidiano.
-Expressões naturais.
+Interact naturally with the product.
 
-A pessoa deve falar em português do Brasil, com voz humana natural e tom de conversa.
+Use authentic Brazilian Portuguese speech.
 
-Começar imediatamente com uma frase forte e dinâmica.
+The creator should sound spontaneous, confident and conversational.
 
-Mostrar o produto de perto.
-Demonstrar sua utilização quando fizer sentido.
-Destacar benefícios reais sem promessas exageradas.
+Focus on real product benefits.
 
-Finalizar com uma chamada natural para conferir o produto no carrinho do TikTok Shop.
+Avoid sounding like a traditional television advertisement.
 
-Não adicionar texto na tela.
-Não adicionar legendas.
-Não adicionar emojis.
-Não criar mãos extras.
-Não modificar o produto.
+The final moment should naturally encourage the viewer to check the product in TikTok Shop.
       `.trim();
     }
 
-    if (style === "POV Real") {
+    if (
+      style === "POV Real"
+    ) {
       return `
-Criar um vídeo POV extremamente realista para TikTok Shop.
+${common}
 
-Formato obrigatório vertical 9:16.
+STYLE: POV REAL.
 
-A câmera deve parecer a visão de uma pessoa real segurando um celular.
+The camera represents the viewer's point of view.
 
-Mostrar apenas ações humanas naturais e interação real com o produto.
+Show realistic hands interacting with the product.
 
-O produto deve permanecer exatamente igual à imagem de referência.
+The camera should behave like a person holding a smartphone.
 
-Não alterar cor, formato, tamanho, textura, embalagem ou proporções.
+Start immediately with a strong visual hook.
 
-Movimentos naturais das mãos e da câmera.
-Iluminação realista.
-Ambiente cotidiano.
-Aparência de vídeo gravado por uma pessoa real.
+Move naturally toward the product.
 
-Nada deve parecer animação ou comercial artificial.
+Demonstrate the product through realistic human interaction.
 
-A pessoa deve falar em português do Brasil com voz espontânea e natural.
+Use natural Brazilian Portuguese speech when appropriate.
 
-Começar imediatamente com um gancho forte.
+The scene should feel spontaneous and authentic, not like a studio commercial.
 
-Demonstrar o produto rapidamente de maneira visual.
-
-Mostrar por que o produto chama atenção e seus benefícios reais.
-
-Finalizar incentivando a pessoa a conferir o produto no carrinho do TikTok Shop.
-
-Não adicionar texto na tela.
-Não adicionar legendas.
-Não adicionar emojis.
-Não criar mãos extras.
-Não modificar o produto.
+Finish with a natural TikTok Shop call to action.
       `.trim();
     }
 
     return `
-Criar um vídeo Showcase extremamente realista para TikTok Shop.
+${common}
 
-Formato obrigatório vertical 9:16.
+STYLE: PRODUCT SHOWCASE.
 
-O produto deve ser o protagonista absoluto do vídeo.
+The product is the main focus.
 
-Usar movimentos de câmera suaves e naturais.
+Use smooth but realistic smartphone camera movement.
 
-Aproximar e afastar a câmera para mostrar os detalhes do produto.
+Show the product from useful angles.
 
-Manter o produto exatamente igual à imagem de referência.
+Move closer to reveal important details.
 
-Não alterar:
-- cor
-- formato
-- tamanho
-- textura
-- embalagem
-- logotipo
-- proporções
-- detalhes
+Keep the product visually consistent throughout the entire video.
 
-Criar aparência de gravação real feita com celular.
+Use realistic lighting and shadows.
 
-Usar iluminação natural e ambiente realista.
+If human interaction is necessary, use only natural human hands and movements.
 
-Mostrar os detalhes importantes do produto.
+If dialogue is used, speak naturally in Brazilian Portuguese.
 
-Demonstrar sua utilização quando fizer sentido.
-
-Se houver fala, usar português do Brasil com voz humana natural.
-
-O vídeo deve parecer conteúdo real de TikTok e não um comercial tradicional.
-
-Finalizar mostrando claramente o produto e incentivando a pessoa a conferir o item no carrinho do TikTok Shop.
-
-Não adicionar texto na tela.
-Não adicionar legendas.
-Não adicionar emojis.
-Não criar mãos extras.
-Não modificar o produto.
+The final shot should clearly show the product and naturally encourage the viewer to check it on TikTok Shop.
     `.trim();
   }
 
-  // ==============================
-  // GERAR VÍDEO
-  // ==============================
+  /*
+   * ==========================================
+   * GERAR VÍDEO
+   * ==========================================
+   */
 
   async function generateVideo() {
     if (!image) {
-      setError("Primeiro envie a foto do produto.");
+      setError(
+        "Primeiro envie a foto do produto."
+      );
       return;
     }
+
+    if (loading) return;
 
     setLoading(true);
     setError("");
@@ -264,81 +357,151 @@ Não modificar o produto.
     setProgress(0);
 
     try {
-      const generatedPrompt = createPrompt();
+      const generatedPrompt =
+        createPrompt();
 
-      setPrompt(generatedPrompt);
-      setStatus("Enviando produto para geração do vídeo...");
-
-      const seconds = Number(
-        duration.replace(" segundos", "")
+      setPrompt(
+        generatedPrompt
       );
 
-      const response = await fetch("/api/video", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          image,
-          prompt: generatedPrompt,
-          seconds,
-        }),
-      });
+      setStatus(
+        "Enviando produto para geração..."
+      );
 
-      const data = await response.json();
+      const seconds =
+        Number(
+          duration.replace(
+            " segundos",
+            ""
+          )
+        );
+
+      /*
+       * POST
+       */
+
+      const response =
+        await fetch(
+          "/api/video",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              image,
+              prompt:
+                generatedPrompt,
+              seconds,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
           data?.error ||
-            "Não foi possível iniciar a geração do vídeo."
+            "Não foi possível iniciar a geração."
         );
       }
 
-      if (!data.id) {
+      if (!data?.id) {
         throw new Error(
           "A API não retornou o ID do vídeo."
         );
       }
 
-      const videoId = data.id;
+      const videoId =
+        data.id;
 
-      setStatus("Vídeo na fila de geração...");
-      setProgress(data.progress ?? 0);
+      setStatus(
+        "Vídeo colocado na fila..."
+      );
+
+      setProgress(
+        Number(
+          data.progress ?? 0
+        )
+      );
+
+      /*
+       * ========================================
+       * POLLING
+       * ========================================
+       */
 
       let finished = false;
+
       let attempts = 0;
 
-      while (!finished && attempts < 120) {
+      const maxAttempts = 120;
+
+      while (
+        !finished &&
+        attempts <
+          maxAttempts
+      ) {
         attempts++;
 
-        await new Promise((resolve) =>
-          setTimeout(resolve, 5000)
+        await new Promise(
+          (resolve) =>
+            setTimeout(
+              resolve,
+              5000
+            )
         );
 
-        const statusResponse = await fetch(
-          `/api/video?id=${encodeURIComponent(videoId)}`,
-          {
-            method: "GET",
-            cache: "no-store",
-          }
-        );
+        const statusResponse =
+          await fetch(
+            `/api/video?id=${encodeURIComponent(
+              videoId
+            )}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            }
+          );
 
-        const statusData = await statusResponse.json();
+        const statusData =
+          await statusResponse.json();
 
-        if (!statusResponse.ok) {
+        if (
+          !statusResponse.ok
+        ) {
           throw new Error(
             statusData?.error ||
               "Erro ao consultar o vídeo."
           );
         }
 
-        setProgress(statusData.progress ?? 0);
+        const currentProgress =
+          Number(
+            statusData.progress ??
+              0
+          );
 
-        if (statusData.status === "completed") {
+        setProgress(
+          currentProgress
+        );
+
+        /*
+         * COMPLETED
+         */
+
+        if (
+          statusData.status ===
+          "completed"
+        ) {
           finished = true;
 
-          setStatus("Vídeo pronto!");
           setProgress(100);
+
+          setStatus(
+            "Vídeo pronto!"
+          );
 
           setVideoUrl(
             `/api/video?id=${encodeURIComponent(
@@ -349,20 +512,28 @@ Não modificar o produto.
           break;
         }
 
+        /*
+         * FAILED
+         */
+
         if (
-          statusData.status === "failed" ||
-          statusData.status === "cancelled"
+          statusData.status ===
+            "failed" ||
+          statusData.status ===
+            "cancelled"
         ) {
           throw new Error(
             statusData?.error ||
-              "A geração do vídeo não foi concluída."
+              "A geração do vídeo falhou."
           );
         }
 
+        /*
+         * EM PROCESSAMENTO
+         */
+
         setStatus(
-          `Gerando vídeo... ${
-            statusData.progress ?? 0
-          }%`
+          `Gerando vídeo... ${currentProgress}%`
         );
       }
 
@@ -372,6 +543,11 @@ Não modificar o produto.
         );
       }
     } catch (err) {
+      console.error(
+        "GENERATE VIDEO ERROR:",
+        err
+      );
+
       setError(
         err instanceof Error
           ? err.message
@@ -384,59 +560,77 @@ Não modificar o produto.
     }
   }
 
-  // ==============================
-  // INTERFACE
-  // ==============================
+  /*
+   * ==========================================
+   * INTERFACE
+   * ==========================================
+   */
 
   return (
     <main
       style={{
-        minHeight: "100vh",
-        background: "#0b0b0f",
+        minHeight:
+          "100vh",
+        background:
+          "#0b0b0f",
         color: "#fff",
-        padding: "30px 16px",
-        fontFamily: "Arial, sans-serif",
+        padding:
+          "30px 16px",
+        fontFamily:
+          "Arial, sans-serif",
       }}
     >
       <div
         style={{
           maxWidth: 720,
-          margin: "0 auto",
+          margin:
+            "0 auto",
         }}
       >
-        <h1
+        <header
           style={{
-            fontSize: 32,
-            fontWeight: 800,
-            marginBottom: 8,
-          }}
-        >
-          ViralShop AI
-        </h1>
-
-        <p
-          style={{
-            color: "#aaa",
             marginBottom: 30,
           }}
         >
-          Gere vídeos realistas para TikTok Shop
-        </p>
+          <h1
+            style={{
+              fontSize: 34,
+              fontWeight: 900,
+              margin: 0,
+            }}
+          >
+            ViralShop AI
+          </h1>
 
-        {/* FOTO */}
+          <p
+            style={{
+              color: "#aaa",
+              marginTop: 8,
+            }}
+          >
+            Crie vídeos realistas
+            para TikTok Shop
+          </p>
+        </header>
+
+        {/* ================= FOTO ================= */}
 
         <section
           style={{
-            background: "#15151b",
-            borderRadius: 18,
+            background:
+              "#15151b",
+            borderRadius:
+              18,
             padding: 22,
-            marginBottom: 18,
+            marginBottom:
+              18,
           }}
         >
           <h2
             style={{
               fontSize: 18,
-              marginBottom: 14,
+              marginBottom:
+                14,
             }}
           >
             1. Foto do produto
@@ -444,12 +638,17 @@ Não modificar o produto.
 
           <label
             style={{
-              display: "block",
-              border: "2px dashed #444",
-              borderRadius: 14,
-              padding: 25,
-              textAlign: "center",
-              cursor: "pointer",
+              display:
+                "block",
+              border:
+                "2px dashed #444",
+              borderRadius:
+                14,
+              padding: 20,
+              textAlign:
+                "center",
+              cursor:
+                "pointer",
             }}
           >
             {image ? (
@@ -457,29 +656,42 @@ Não modificar o produto.
                 src={image}
                 alt="Produto"
                 style={{
-                  width: "100%",
-                  maxWidth: 360,
-                  aspectRatio: "9 / 16",
-                  objectFit: "contain",
-                  borderRadius: 12,
+                  width:
+                    "100%",
+                  maxWidth:
+                    360,
+                  aspectRatio:
+                    "9 / 16",
+                  objectFit:
+                    "contain",
+                  borderRadius:
+                    12,
                 }}
               />
             ) : (
-              <span
+              <div
                 style={{
-                  color: "#aaa",
+                  padding:
+                    "45px 10px",
+                  color:
+                    "#aaa",
                 }}
               >
-                Clique para enviar a foto do produto
-              </span>
+                Clique para
+                enviar a foto
+                do produto
+              </div>
             )}
 
             <input
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp"
-              onChange={handleImage}
+              onChange={
+                handleImage
+              }
               style={{
-                display: "none",
+                display:
+                  "none",
               }}
             />
           </label>
@@ -487,31 +699,40 @@ Não modificar o produto.
           {image && (
             <p
               style={{
-                color: "#777",
+                color:
+                  "#777",
                 fontSize: 12,
-                marginTop: 10,
-                textAlign: "center",
+                marginTop:
+                  10,
+                textAlign:
+                  "center",
               }}
             >
-              Foto preparada automaticamente em 9:16
+              Foto preparada
+              automaticamente
+              em 9:16
             </p>
           )}
         </section>
 
-        {/* ESTILO */}
+        {/* ================= ESTILO ================= */}
 
         <section
           style={{
-            background: "#15151b",
-            borderRadius: 18,
+            background:
+              "#15151b",
+            borderRadius:
+              18,
             padding: 22,
-            marginBottom: 18,
+            marginBottom:
+              18,
           }}
         >
           <h2
             style={{
               fontSize: 18,
-              marginBottom: 14,
+              marginBottom:
+                14,
             }}
           >
             2. Estilo do vídeo
@@ -519,62 +740,83 @@ Não modificar o produto.
 
           <div
             style={{
-              display: "grid",
+              display:
+                "grid",
               gridTemplateColumns:
                 "repeat(3, 1fr)",
               gap: 10,
             }}
           >
-            {(
-              [
-                "UGC Real",
-                "POV Real",
-                "Showcase",
-              ] as VideoStyle[]
-            ).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setStyle(item)}
-                style={{
-                  padding: "14px 8px",
-                  borderRadius: 12,
-                  border:
-                    style === item
-                      ? "2px solid #fff"
-                      : "1px solid #444",
-                  background:
-                    style === item
-                      ? "#fff"
-                      : "#202027",
-                  color:
-                    style === item
-                      ? "#000"
-                      : "#fff",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                {item}
-              </button>
-            ))}
+            {[
+              "UGC Real",
+              "POV Real",
+              "Showcase",
+            ].map(
+              (item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() =>
+                    setStyle(
+                      item as VideoStyle
+                    )
+                  }
+                  disabled={
+                    loading
+                  }
+                  style={{
+                    padding:
+                      "14px 8px",
+                    borderRadius:
+                      12,
+                    border:
+                      style ===
+                      item
+                        ? "2px solid #fff"
+                        : "1px solid #444",
+                    background:
+                      style ===
+                      item
+                        ? "#fff"
+                        : "#202027",
+                    color:
+                      style ===
+                      item
+                        ? "#000"
+                        : "#fff",
+                    cursor:
+                      loading
+                        ? "not-allowed"
+                        : "pointer",
+                    fontWeight:
+                      700,
+                  }}
+                >
+                  {item}
+                </button>
+              )
+            )}
           </div>
         </section>
 
-        {/* DURAÇÃO */}
+        {/* ================= DURAÇÃO ================= */}
 
         <section
           style={{
-            background: "#15151b",
-            borderRadius: 18,
+            background:
+              "#15151b",
+            borderRadius:
+              18,
             padding: 22,
-            marginBottom: 18,
+            marginBottom:
+              18,
           }}
         >
           <h2
             style={{
               fontSize: 18,
-              marginBottom: 14,
+              marginBottom:
+                14,
             }}
           >
             3. Duração
@@ -582,73 +824,117 @@ Não modificar o produto.
 
           <div
             style={{
-              display: "grid",
+              display:
+                "grid",
               gridTemplateColumns:
                 "repeat(3, 1fr)",
               gap: 10,
             }}
           >
-            {(
-              [
-                "4 segundos",
-                "8 segundos",
-                "12 segundos",
-              ] as Duration[]
-            ).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() =>
-                  setDuration(item)
-                }
-                style={{
-                  padding: 14,
-                  borderRadius: 12,
-                  border:
-                    duration === item
-                      ? "2px solid #fff"
-                      : "1px solid #444",
-                  background:
-                    duration === item
-                      ? "#fff"
-                      : "#202027",
-                  color:
-                    duration === item
-                      ? "#000"
-                      : "#fff",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                {item}
-              </button>
-            ))}
+            {[
+              "4 segundos",
+              "8 segundos",
+              "12 segundos",
+            ].map(
+              (item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() =>
+                    setDuration(
+                      item as Duration
+                    )
+                  }
+                  disabled={
+                    loading
+                  }
+                  style={{
+                    padding:
+                      14,
+                    borderRadius:
+                      12,
+                    border:
+                      duration ===
+                      item
+                        ? "2px solid #fff"
+                        : "1px solid #444",
+                    background:
+                      duration ===
+                      item
+                        ? "#fff"
+                        : "#202027",
+                    color:
+                      duration ===
+                      item
+                        ? "#000"
+                        : "#fff",
+                    cursor:
+                      loading
+                        ? "not-allowed"
+                        : "pointer",
+                    fontWeight:
+                      700,
+                  }}
+                >
+                  {item}
+                </button>
+              )
+            )}
           </div>
+
+          <p
+            style={{
+              color:
+                "#777",
+              fontSize: 12,
+              marginTop:
+                12,
+              marginBottom: 0,
+            }}
+          >
+            A API de vídeo
+            atualmente aceita
+            4, 8 ou 12 segundos.
+          </p>
         </section>
 
-        {/* BOTÃO */}
+        {/* ================= BOTÃO ================= */}
 
         <button
           type="button"
-          onClick={generateVideo}
-          disabled={loading || !image}
+          onClick={
+            generateVideo
+          }
+          disabled={
+            loading ||
+            !image
+          }
           style={{
-            width: "100%",
-            padding: "18px",
-            borderRadius: 14,
-            border: "none",
+            width:
+              "100%",
+            padding:
+              "18px",
+            borderRadius:
+              14,
+            border:
+              "none",
             background:
-              loading || !image
+              loading ||
+              !image
                 ? "#444"
                 : "#fff",
             color:
-              loading || !image
+              loading ||
+              !image
                 ? "#aaa"
                 : "#000",
-            fontSize: 18,
-            fontWeight: 800,
+            fontSize:
+              18,
+            fontWeight:
+              900,
             cursor:
-              loading || !image
+              loading ||
+              !image
                 ? "not-allowed"
                 : "pointer",
           }}
@@ -658,20 +944,24 @@ Não modificar o produto.
             : "GERAR VÍDEO"}
         </button>
 
-        {/* STATUS */}
+        {/* ================= STATUS ================= */}
 
         {status && (
           <div
             style={{
-              marginTop: 20,
-              background: "#15151b",
-              borderRadius: 14,
+              marginTop:
+                20,
+              background:
+                "#15151b",
+              borderRadius:
+                14,
               padding: 18,
             }}
           >
             <div
               style={{
-                marginBottom: 10,
+                marginBottom:
+                  10,
               }}
             >
               {status}
@@ -680,9 +970,12 @@ Não modificar o produto.
             <div
               style={{
                 height: 10,
-                background: "#292932",
-                borderRadius: 10,
-                overflow: "hidden",
+                background:
+                  "#292932",
+                borderRadius:
+                  10,
+                overflow:
+                  "hidden",
               }}
             >
               <div
@@ -691,8 +984,10 @@ Não modificar o produto.
                     progress,
                     100
                   )}%`,
-                  height: "100%",
-                  background: "#fff",
+                  height:
+                    "100%",
+                  background:
+                    "#fff",
                   transition:
                     "width 0.4s ease",
                 }}
@@ -701,50 +996,66 @@ Não modificar o produto.
 
             <div
               style={{
-                marginTop: 8,
-                color: "#aaa",
-                fontSize: 13,
+                marginTop:
+                  8,
+                color:
+                  "#aaa",
+                fontSize:
+                  13,
               }}
             >
-              {progress}%
+              {Math.round(
+                progress
+              )}
+              %
             </div>
           </div>
         )}
 
-        {/* ERRO */}
+        {/* ================= ERRO ================= */}
 
         {error && (
           <div
             style={{
-              marginTop: 20,
+              marginTop:
+                20,
               padding: 16,
-              borderRadius: 12,
-              background: "#321719",
-              color: "#ffb4b4",
+              borderRadius:
+                12,
+              background:
+                "#321719",
+              color:
+                "#ffb4b4",
             }}
           >
             {error}
           </div>
         )}
 
-        {/* VÍDEO */}
+        {/* ================= VÍDEO ================= */}
 
         {videoUrl && (
           <section
             style={{
-              marginTop: 24,
-              background: "#15151b",
-              borderRadius: 18,
+              marginTop:
+                24,
+              background:
+                "#15151b",
+              borderRadius:
+                18,
               padding: 18,
             }}
           >
             <h2
               style={{
-                fontSize: 20,
-                marginBottom: 15,
+                fontSize:
+                  20,
+                marginBottom:
+                  15,
               }}
             >
-              Seu vídeo está pronto
+              Seu vídeo
+              está pronto
             </h2>
 
             <video
@@ -752,26 +1063,41 @@ Não modificar o produto.
               controls
               playsInline
               style={{
-                width: "100%",
-                maxHeight: 700,
-                borderRadius: 14,
-                background: "#000",
+                width:
+                  "100%",
+                maxHeight:
+                  700,
+                borderRadius:
+                  14,
+                background:
+                  "#000",
               }}
             />
 
             <a
-              href={videoUrl}
+              href={
+                videoUrl
+              }
               download="viralshop-video.mp4"
               style={{
-                display: "block",
-                marginTop: 15,
-                textAlign: "center",
-                padding: 15,
-                borderRadius: 12,
-                background: "#fff",
-                color: "#000",
-                textDecoration: "none",
-                fontWeight: 800,
+                display:
+                  "block",
+                marginTop:
+                  15,
+                textAlign:
+                  "center",
+                padding:
+                  15,
+                borderRadius:
+                  12,
+                background:
+                  "#fff",
+                color:
+                  "#000",
+                textDecoration:
+                  "none",
+                fontWeight:
+                  900,
               }}
             >
               BAIXAR VÍDEO
@@ -779,18 +1105,21 @@ Não modificar o produto.
           </section>
         )}
 
-        {/* PROMPT */}
+        {/* ================= PROMPT ================= */}
 
         {prompt && (
           <details
             style={{
-              marginTop: 20,
+              marginTop:
+                20,
             }}
           >
             <summary
               style={{
-                cursor: "pointer",
-                color: "#aaa",
+                cursor:
+                  "pointer",
+                color:
+                  "#aaa",
               }}
             >
               Ver prompt utilizado
@@ -798,13 +1127,21 @@ Não modificar o produto.
 
             <pre
               style={{
-                whiteSpace: "pre-wrap",
-                background: "#15151b",
+                whiteSpace:
+                  "pre-wrap",
+                background:
+                  "#15151b",
                 padding: 15,
-                borderRadius: 12,
-                marginTop: 10,
-                color: "#bbb",
-                fontSize: 12,
+                borderRadius:
+                  12,
+                marginTop:
+                  10,
+                color:
+                  "#bbb",
+                fontSize:
+                  12,
+                overflowX:
+                  "auto",
               }}
             >
               {prompt}
